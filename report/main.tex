@@ -1,0 +1,43 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs,hyperref,graphicx}
+\title{Warden: A Validation-Gated, Self-Improving Security Gateway for AI Agents and MCP Tools}
+\author{Sunny Aaron}
+\date{\today}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Warden inspects the three channels an attacker can reach in the Model Context Protocol (tool
+descriptions, arguments and outputs), tracks session taint, and enforces a signed, hash-bound
+policy. A red/blue loop proposes defences from confirmed bypasses, and an eight-stage validation gate
+checks that each is harmless to benign work before it may enforce. We report measured results with
+confidence intervals, including negative results. \textbf{Results here use a simulated victim agent;}
+see Section~\ref{sec:limits}.
+\end{abstract}
+
+\section{Introduction}
+Problem, threat model (see \texttt{docs/THREAT\_MODEL.md}), contributions.
+
+\section{Design}
+Policy IR and trusted compiler; gateway; detection cascade L0--L3; validation gate G1--G8
+(see \texttt{docs/DESIGN.md}).
+
+\section{Evaluation}
+\subsection{Setup}
+Baselines B0--B4; research questions RQ1--RQ3; Wilson intervals, exact McNemar, bootstrap; locked test split.
+\subsection{RQ1: detection and benign utility}
+\input{tables/rq1.tex}
+\subsection{RQ2: does the gate prevent self-DoS?}
+Mechanism demonstrated (G2 rejection, unit-tested); magnitude requires a real-LLM victim.
+\subsection{RQ3: ASR across loop rounds}
+To be filled from \texttt{warden loop run} outputs.
+
+\section{Limitations}\label{sec:limits}
+Simulated victim; synthetic corpus written for the project; partial OWASP coverage;
+untested out-of-distribution robustness.
+
+\section{Related work}
+AgentDojo, LlamaFirewall, PromptGuard~2, MCP security literature, OWASP ASI/MCP Top~10.
+
+\end{document}
