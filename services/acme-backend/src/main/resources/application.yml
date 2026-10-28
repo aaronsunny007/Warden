@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: acme-support
+  datasource:
+    url: jdbc:h2:mem:acme;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  h2:
+    console:
+      enabled: false
+
+server:
+  port: 8081
+
+# Actuator: health for probes, Prometheus for scraping (same metric stack as the rest of Warden).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: [health, info, prometheus]
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: acme-support
