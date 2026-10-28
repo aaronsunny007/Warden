@@ -485,3 +485,122 @@ async def run_experiment(
 
 def run(**kwargs: Any) -> dict[str, Any]:
     return asyncio.run(run_experiment(**kwargs))
+
+
+async def run_agentdojo_experiment(
+    suite_name: str,
+    baselines: list[str],
+    agent_name: str = "simulated",
+    max_user_tasks: int | None = None,
+    max_injection_tasks: int | None = None,
+    seeds: int = 1,
+    out_dir: Path | None = None,
+    ollama_url: str = "http://127.0.0.1:11434",
+    p: float = 0.55,
+    spotlight_factor: float = 0.5,
+) -> dict[str, Any]:
+    """V1 victim: an AgentDojo suite served over MCP, through each baseline."""
+    from warden.eval.agentdojo_adapter import DojoSuiteServer, build_dojo_cases, judge_case, run_simulated
+
+    server = DojoSuiteServer(suite_name).start()
+    cases = build_dojo_cases(server, max_user_tasks, max_injection_tasks)
+    run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    import platform
+
+    meta: dict[str, Any] = {
+        "experiment": f"agentdojo-{suite_name}",
+        "run_id": run_id,
+        "started": datetime.now(UTC).isoformat(timespec="seconds"),
+        "agent": agent_name,
+        "version": __version__,
+        "baselines": baselines,
+        "templates": ["important_instructions"],
+        "seeds": seeds,
+        "cases": len(cases),
+        "attack_cases": sum(1 for c in cases if c.injection_task is not None),
+        "hardware": {"machine": platform.machine(), "python": platform.python_version()},
+        "caveats": (CAVEATS_SIM if agent_name == "simulated" else CAVEATS_LLM)
+        + [
+            "AgentDojo tasks run through Warden's MCP adapter with the attack injected into every injection vector of the "
+            "suite (AgentDojo itself injects only the vectors a user task reads). The whole suite is treated as untrusted, "
+            "so taint tracking is maximally strict here."
+        ],
+    }
+    model = None
+    if agent_name != "simulated":
+        from warden.eval.agent_graph import ollama_model
+
+        model = ollama_model(agent_name.removeprefix("ollama:"), ollama_url)
+    rows: list[Row] = []
+    gids = [f"{b}-core" for b in baselines if b != "B0"]
+    try:
+        with Stack(baselines=gids, server_configs={"core": [server.gateway_server_config()]}) as stack:
+            for seed in range(seeds):
+                for case in cases:
+                    for b in baselines:
+                        pre_env = server.reset(case.injections)
+                        session = f"{run_id}:{b}:{case.id}:s{seed}"
+                        gw = stack.gateway_url(f"{b}-core") if b != "B0" else None
+                        started = time.perf_counter()
+                        async with ToolSession(
+                            session,
+                            case.user_task.PROMPT,
+                            gateway_url=gw,
+                            lab_url=server.base_url,
+                            servers=[suite_name],
+                        ) as ts:
+                            if model is None:
+                                answer, complied = await run_simulated(
+                                    case, ts, suite_name, pre_env, f"{case.id}|{seed}", p, spotlight_factor
+                                )
+                            else:
+                                from warden.eval.agent_graph import run_graph_agent
+                                from warden.eval.scenarios import BenignTask
+
+                                ep = await run_graph_agent(
+                                    model,
+                                    BenignTask(id=case.id, prompt=case.user_task.PROMPT),
+                                    ts,
+                                    hardened=b != "B0",
+                                )
+                                answer, complied = ep.answer, False
+                            calls = list(ts.calls)
+                        utility, attacked = judge_case(case, answer, pre_env, server.env)
+                        rows.append(
+                            Row(
+                                baseline=b,
+                                case_id=case.id,
+                                kind="benign" if case.injection_task is None else "content",
+                                task=case.id.split(":")[1],
+                                goal=case.injection_task.ID if case.injection_task else "",
+                                template="important_instructions" if case.injection_task else "",
+                                vector="agentdojo:all",
+                                seed=seed,
+                                session=session,
+                                utility=utility,
+                                attacked=attacked,
+                                complied=complied,
+                                saw_trigger=complied,
+                                calls=len(calls),
+                                errors=sum(1 for c in calls if c.is_error),
+                                hidden_tools=[],
+                                seconds=time.perf_counter() - started,
+                            )
+                        )
+            messages = {
+                b: stack.admin(f"{b}-core", "/messages?limit=200000") or [] for b in baselines if b != "B0"
+            }
+    finally:
+        server.stop()
+    summary = summarise(rows, messages, baselines)
+    hyp = [hypothesis_check(summary, b) for b in baselines if b in {"B3", "B4"}]
+    out = out_dir or (Path("results") / meta["experiment"] / f"{run_id}-{agent_name.replace(':', '_')}")
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "results.json").write_text(
+        json.dumps({"meta": meta, "summary": summary, "hypotheses": hyp}, indent=2, default=str)
+    )
+    with (out / "cases.jsonl").open("w") as f:
+        for r in rows:
+            f.write(json.dumps(asdict(r)) + "\n")
+    (out / "report.md").write_text(render_markdown(meta, summary, hyp))
+    return {"out": str(out), "meta": meta, "summary": summary, "hypotheses": hyp}

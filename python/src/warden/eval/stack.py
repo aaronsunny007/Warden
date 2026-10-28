@@ -93,6 +93,8 @@ class Stack(AbstractContextManager["Stack"]):
     baselines: list[str]
     extra_rules: dict[str, list[dict[str, Any]]] = field(default_factory=dict)  # B4/B5 promoted rules
     record_messages: bool = True
+    # Optional upstream server configs per server set ("core"/"mcp"), e.g. AgentDojo suites.
+    server_configs: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     workdir: Path = field(default_factory=lambda: Path(tempfile.mkdtemp(prefix="warden-eval-")))
     procs: dict[str, Proc] = field(default_factory=dict)
 
@@ -164,8 +166,8 @@ class Stack(AbstractContextManager["Stack"]):
     ) -> Path:
         baseline = gid.split("-")[0]
         pins = baseline not in {"B0", "B1", "B2"}
-        servers = []
-        for s in MCP_SERVERS if gid.endswith("-mcp") else CORE_SERVERS:
+        servers: list[dict[str, Any]] = list(self.server_configs.get(gid.split("-", 1)[1], []))
+        for s in [] if servers else (MCP_SERVERS if gid.endswith("-mcp") else CORE_SERVERS):
             servers.append(
                 {
                     "name": s,

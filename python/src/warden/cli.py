@@ -57,6 +57,27 @@ def cmd_eval(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_agentdojo(a: argparse.Namespace) -> int:
+    import asyncio
+
+    from warden.eval.runner import run_agentdojo_experiment
+
+    res = asyncio.run(
+        run_agentdojo_experiment(
+            a.suite,
+            _csv(a.baselines) or ["B0", "B3"],
+            agent_name=a.agent,
+            max_user_tasks=a.max_user_tasks,
+            max_injection_tasks=a.max_injection_tasks,
+            seeds=a.seeds,
+            out_dir=Path(a.out) if a.out else None,
+            ollama_url=a.ollama_url,
+        )
+    )
+    print(json.dumps({"out": res["out"], "hypotheses": res["hypotheses"]}, indent=2, default=str))
+    return 0
+
+
 def cmd_corpus(a: argparse.Namespace) -> int:
     from warden.corpus import verify_lock
 
@@ -83,7 +104,8 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--port", type=int, default=8000)
     d.set_defaults(fn=cmd_detector)
 
-    e = sub.add_parser("eval").add_subparsers(dest="sub", required=True).add_parser("run")
+    eval_sub = sub.add_parser("eval").add_subparsers(dest="sub", required=True)
+    e = eval_sub.add_parser("run", help="V2: the Acme Support lab")
     e.add_argument("--experiment", default="rq1")
     e.add_argument("--baselines", default="B0,B1,B2,B3")
     e.add_argument("--agent", default="simulated")
@@ -103,6 +125,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="exit 3 if B3/B4 miss the H1 targets (CI merge gate)",
     )
     e.set_defaults(fn=cmd_eval)
+
+    ad = eval_sub.add_parser("agentdojo", help="V1: run an AgentDojo suite through each baseline")
+    ad.add_argument("--suite", default="banking", choices=["workspace", "banking", "travel", "slack"])
+    ad.add_argument("--baselines", default="B0,B3")
+    ad.add_argument("--agent", default="simulated")
+    ad.add_argument("--max-user-tasks", type=int)
+    ad.add_argument("--max-injection-tasks", type=int)
+    ad.add_argument("--seeds", type=int, default=1)
+    ad.add_argument("--out")
+    ad.add_argument("--ollama-url", default="http://127.0.0.1:11434")
+    ad.set_defaults(fn=cmd_agentdojo)
 
     c = sub.add_parser("corpus").add_subparsers(dest="sub", required=True).add_parser("verify-lock")
     c.set_defaults(fn=cmd_corpus)

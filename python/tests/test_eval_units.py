@@ -74,7 +74,13 @@ class FakeTools:
         self.calls: list[ToolCall] = []
 
     async def list_tools(self) -> list[ToolSpec]:
-        return [ToolSpec("tickets.get_ticket", "Read a ticket", {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]})]
+        return [
+            ToolSpec(
+                "tickets.get_ticket",
+                "Read a ticket",
+                {"type": "object", "properties": {"id": {"type": "string"}}, "required": ["id"]},
+            )
+        ]
 
     async def call(self, name: str, args: dict[str, Any]) -> ToolCall:
         tc = ToolCall(name, args, f"ticket {args.get('id')}: VAT number wrong", False)
@@ -90,10 +96,15 @@ class ToolFake(GenericFakeChatModel):
 async def test_graph_agent_drives_tools() -> None:
     from warden.eval.scenarios import BenignTask
 
-    msgs = iter([
-        AIMessage(content="", tool_calls=[{"name": "tickets__get_ticket", "args": {"id": "T-501"}, "id": "call-1"}]),
-        AIMessage(content="The ticket says the VAT number is wrong."),
-    ])
+    msgs = iter(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[{"name": "tickets__get_ticket", "args": {"id": "T-501"}, "id": "call-1"}],
+            ),
+            AIMessage(content="The ticket says the VAT number is wrong."),
+        ]
+    )
     tools = FakeTools()
     ep = await run_graph_agent(ToolFake(messages=msgs), BenignTask(id="t", prompt="Read T-501"), tools)  # type: ignore[arg-type]
     assert [c.name for c in tools.calls] == ["tickets.get_ticket"]
