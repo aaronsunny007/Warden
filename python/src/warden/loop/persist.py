@@ -40,23 +40,85 @@ class LoopStore:
 
         self._do(
             lambda s: s.merge(
-                Row(id=c.id, run_id=c.run_id, round=c.round, family=c.family, goal=c.goal, vector=c.vector, payload=c.payload, operators=c.operators, bypass=bypass, judge={}, trace={})
+                Row(
+                    id=c.id,
+                    run_id=c.run_id,
+                    round=c.round,
+                    family=c.family,
+                    goal=c.goal,
+                    vector=c.vector,
+                    payload=c.payload,
+                    operators=c.operators,
+                    bypass=bypass,
+                    judge={},
+                    trace={},
+                )
             )
         )
 
-    def candidate(self, candidate_id: str, campaign_id: str, author: str, rule: dict[str, Any], rule_hash: str, status: str, stage: str, report_id: str | None) -> None:
+    def candidate(
+        self,
+        candidate_id: str,
+        campaign_id: str,
+        author: str,
+        rule: dict[str, Any],
+        rule_hash: str,
+        status: str,
+        stage: str,
+        report_id: str | None,
+    ) -> None:
         from warden.db.models import Candidate as Row
 
-        self._do(lambda s: s.merge(Row(id=candidate_id, campaign_id=campaign_id, author=author, rule=rule, rule_hash=rule_hash, status=status, stage=stage, report_id=report_id)))
+        self._do(
+            lambda s: s.merge(
+                Row(
+                    id=candidate_id,
+                    campaign_id=campaign_id,
+                    author=author,
+                    rule=rule,
+                    rule_hash=rule_hash,
+                    status=status,
+                    stage=stage,
+                    report_id=report_id,
+                )
+            )
+        )
 
     def gate_report(self, report: GateReport) -> str:
         from warden.db.models import GateReport as Row
 
         rid = report.digest()
-        self._do(lambda s: s.merge(Row(id=rid, candidate_id=report.candidate_id, passed=report.passed, report={"rule_id": report.rule_id, "stages": [{"stage": st.stage, "passed": st.passed, "detail": st.detail} for st in report.stages]})))
+        self._do(
+            lambda s: s.merge(
+                Row(
+                    id=rid,
+                    candidate_id=report.candidate_id,
+                    passed=report.passed,
+                    report={
+                        "rule_id": report.rule_id,
+                        "stages": [
+                            {"stage": st.stage, "passed": st.passed, "detail": st.detail}
+                            for st in report.stages
+                        ],
+                    },
+                )
+            )
+        )
         return rid
 
     def defence(self, rec: Any) -> None:
         from warden.db.models import Defence as Row
 
-        self._do(lambda s: s.merge(Row(rule_id=rec.rule_id, version=rec.version, rule_hash=rec.rule_hash, rule=rec.rule, signatures=rec.signatures, hits=rec.hits, retired=rec.retired)))
+        self._do(
+            lambda s: s.merge(
+                Row(
+                    rule_id=rec.rule_id,
+                    version=rec.version,
+                    rule_hash=rec.rule_hash,
+                    rule=rec.rule,
+                    signatures=rec.signatures,
+                    hits=rec.hits,
+                    retired=rec.retired,
+                )
+            )
+        )

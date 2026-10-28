@@ -39,8 +39,24 @@ def _run_rq2(a: argparse.Namespace) -> int:
     from warden.loop.orchestrator import run_loop_experiment
 
     out = Path(a.out) if a.out else None
-    gated = run_loop_experiment(True, a.rounds, a.attempts, a.seed, out / "gated" if out else None, start_rules=a.start_rules, blend_rate=a.blend_rate)
-    ungated = run_loop_experiment(False, a.rounds, a.attempts, a.seed, out / "ungated" if out else None, start_rules=a.start_rules, blend_rate=a.blend_rate)
+    gated = run_loop_experiment(
+        True,
+        a.rounds,
+        a.attempts,
+        a.seed,
+        out / "gated" if out else None,
+        start_rules=a.start_rules,
+        blend_rate=a.blend_rate,
+    )
+    ungated = run_loop_experiment(
+        False,
+        a.rounds,
+        a.attempts,
+        a.seed,
+        out / "ungated" if out else None,
+        start_rules=a.start_rules,
+        blend_rate=a.blend_rate,
+    )
 
     def lost(res: dict[str, Any]) -> float:
         base = res["meta"]["baseline_utility"]
@@ -89,7 +105,9 @@ def register(sub: Any) -> None:
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--out")
     r.add_argument("--start-rules", default="minimal", choices=["minimal", "baseline"])
-    r.add_argument("--blend-rate", type=float, default=0.0, help="RQ2: fraction of attacks that blend in benign phrasing")
+    r.add_argument(
+        "--blend-rate", type=float, default=0.0, help="RQ2: fraction of attacks that blend in benign phrasing"
+    )
     r.set_defaults(fn=_run_loop)
 
     rq2 = loop.add_parser("rq2", help="induced self-DoS: gated vs ungated")
@@ -98,5 +116,7 @@ def register(sub: Any) -> None:
     rq2.add_argument("--seed", type=int, default=0)
     rq2.add_argument("--out")
     rq2.add_argument("--start-rules", default="minimal", choices=["minimal", "baseline"])
-    rq2.add_argument("--blend-rate", type=float, default=0.5, help="fraction of attacks that blend in benign phrasing")
+    rq2.add_argument(
+        "--blend-rate", type=float, default=0.5, help="fraction of attacks that blend in benign phrasing"
+    )
     rq2.set_defaults(fn=_run_rq2)

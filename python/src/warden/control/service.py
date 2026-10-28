@@ -50,7 +50,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if bypass_only:
                 q = q.where(Campaign.bypass.is_(True))
             return [
-                {"id": c.id, "run_id": c.run_id, "round": c.round, "family": c.family, "goal": c.goal, "vector": c.vector, "bypass": c.bypass, "created_at": c.created_at.isoformat()}
+                {
+                    "id": c.id,
+                    "run_id": c.run_id,
+                    "round": c.round,
+                    "family": c.family,
+                    "goal": c.goal,
+                    "vector": c.vector,
+                    "bypass": c.bypass,
+                    "created_at": c.created_at.isoformat(),
+                }
                 for c in db.execute(q).scalars()
             ]
 
@@ -61,7 +70,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if status:
                 q = q.where(Candidate.status == status)
             return [
-                {"id": c.id, "author": c.author, "status": c.status, "stage": c.stage, "rule_id": c.rule["id"], "rule_hash": c.rule_hash, "report_id": c.report_id, "created_at": c.created_at.isoformat()}
+                {
+                    "id": c.id,
+                    "author": c.author,
+                    "status": c.status,
+                    "stage": c.stage,
+                    "rule_id": c.rule["id"],
+                    "rule_hash": c.rule_hash,
+                    "report_id": c.report_id,
+                    "created_at": c.created_at.isoformat(),
+                }
                 for c in db.execute(q).scalars()
             ]
 
@@ -72,7 +90,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if not c:
                 raise HTTPException(404, "unknown candidate")
             report = db.get(GateReport, c.report_id) if c.report_id else None
-            return {"id": c.id, "author": c.author, "status": c.status, "stage": c.stage, "rule": c.rule, "rule_hash": c.rule_hash, "report": report.report if report else None}
+            return {
+                "id": c.id,
+                "author": c.author,
+                "status": c.status,
+                "stage": c.stage,
+                "rule": c.rule,
+                "rule_hash": c.rule_hash,
+                "report": report.report if report else None,
+            }
 
     @app.get("/v1/gate-reports/{report_id}")
     def gate_report(report_id: str) -> dict[str, Any]:
@@ -80,13 +106,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             r = db.get(GateReport, report_id)
             if not r:
                 raise HTTPException(404, "unknown report")
-            return {"id": r.id, "candidate_id": r.candidate_id, "passed": r.passed, "report": r.report, "created_at": r.created_at.isoformat()}
+            return {
+                "id": r.id,
+                "candidate_id": r.candidate_id,
+                "passed": r.passed,
+                "report": r.report,
+                "created_at": r.created_at.isoformat(),
+            }
 
     @app.get("/v1/defences")
     def defences() -> list[dict[str, Any]]:
         with sf() as db:
             return [
-                {"rule_id": d.rule_id, "version": d.version, "hits": d.hits, "retired": d.retired, "signatures": len(d.signatures), "owasp": d.rule.get("owasp", [])}
+                {
+                    "rule_id": d.rule_id,
+                    "version": d.version,
+                    "hits": d.hits,
+                    "retired": d.retired,
+                    "signatures": len(d.signatures),
+                    "owasp": d.rule.get("owasp", []),
+                }
                 for d in db.execute(select(Defence).where(Defence.retired.is_(False))).scalars()
             ]
 
@@ -108,23 +147,43 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             rules = [r for r in active if r["id"] != rule["id"]] + [rule]
             hashes = policy_cli.hashes(rules)
             approvals = [
-                {"ruleId": r["id"], "version": r["version"], "ruleHash": hashes[r["id"]], "stage": body.stage if r["id"] == rule["id"] else r.get("mode", "enforce"),
-                 "gateReport": report.id if r["id"] == rule["id"] else "0" * 64, "approvedBy": body.approver, "human": r["id"] == rule["id"], "approvedAt": datetime.now(UTC).isoformat()}
+                {
+                    "ruleId": r["id"],
+                    "version": r["version"],
+                    "ruleHash": hashes[r["id"]],
+                    "stage": body.stage if r["id"] == rule["id"] else r.get("mode", "enforce"),
+                    "gateReport": report.id if r["id"] == rule["id"] else "0" * 64,
+                    "approvedBy": body.approver,
+                    "human": r["id"] == rule["id"],
+                    "approvedAt": datetime.now(UTC).isoformat(),
+                }
                 for r in rules
             ]
-            bundle = policy_cli.sign(policy_cli.build_bundle(rules, approvals, f"promote-{candidate_id}"), key_path, key_id)
+            bundle = policy_cli.sign(
+                policy_cli.build_bundle(rules, approvals, f"promote-{candidate_id}"), key_path, key_id
+            )
             c.status = "approved"
             c.stage = body.stage
-        return {"ok": True, "candidate": candidate_id, "stage": body.stage, "bundle_id": bundle["id"], "note": "deliver this signed bundle to the gateway (PUT /api/v1/policy) or commit it for the gateway to hot-reload"}
+        return {
+            "ok": True,
+            "candidate": candidate_id,
+            "stage": body.stage,
+            "bundle_id": bundle["id"],
+            "note": "deliver this signed bundle to the gateway (PUT /api/v1/policy) or commit it for the gateway to hot-reload",
+        }
 
     @app.get("/v1/stats")
     def stats() -> dict[str, Any]:
         with sf() as db:
             return {
                 "campaigns": db.execute(select(func.count()).select_from(Campaign)).scalar_one(),
-                "bypasses": db.execute(select(func.count()).select_from(Campaign).where(Campaign.bypass.is_(True))).scalar_one(),
+                "bypasses": db.execute(
+                    select(func.count()).select_from(Campaign).where(Campaign.bypass.is_(True))
+                ).scalar_one(),
                 "candidates": db.execute(select(func.count()).select_from(Candidate)).scalar_one(),
-                "defences": db.execute(select(func.count()).select_from(Defence).where(Defence.retired.is_(False))).scalar_one(),
+                "defences": db.execute(
+                    select(func.count()).select_from(Defence).where(Defence.retired.is_(False))
+                ).scalar_one(),
             }
 
     return app

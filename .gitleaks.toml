@@ -1,0 +1,27 @@
+# Gitleaks configuration. Extends the default ruleset; nothing is disabled globally.
+#
+# Warden is a security project that ships deliberately fake secrets: canary tokens in the
+# synthetic lab data, and test vectors for its own secret detector. Each allowlisted value
+# below is one of those fixtures, matched by exact value AND restricted to the files that hold it.
+# Anything else, anywhere else, is still reported.
+title = "warden gitleaks config"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Synthetic lab data and detector test vectors (exact fake values, fixture files only)"
+condition = "AND"
+paths = [
+  '''^data/lab/world\.json$''',
+  '''^data/corpus/.*\.jsonl$''',
+  '''^python/scripts/build_corpus\.py$''',
+  '''^packages/[a-z-]+/(test|src)/.*\.ts$''',
+]
+regexes = [
+  '''WARDEN-CANARY-[A-Z0-9]{12}''',                       # lab canary token (never a real credential)
+  '''AKIAIOSFODNN7EXAMPLE''',                             # AWS's documented example key id
+  '''aGVsbG8gd29ybGQ=''',                                 # base64 of "hello world"
+  '''xoxb-1234567890-abcdefghij''',                        # fake Slack token test vector
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0\.[A-Za-z0-9_-]+''',  # fake JWT test vector
+]

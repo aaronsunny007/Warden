@@ -9,6 +9,9 @@ from pathlib import Path
 import pytest
 from conftest import REPO, needs_db, needs_node
 
+# Selected with `-m integration` (CI runs them against Postgres + the built Node packages).
+pytestmark = pytest.mark.integration
+
 
 @needs_node
 def test_policy_cli_round_trip(tmp_path: Path) -> None:

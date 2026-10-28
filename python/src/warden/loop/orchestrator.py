@@ -146,7 +146,13 @@ class LoopRunner:
 
             for rnd in range(self.cfg.rounds):
                 round_res = asyncio.run(red.run_round(rnd))
-                log.info("round %d: %d/%d bypassed (ASR %.2f)", rnd, len(round_res.bypasses), round_res.attempts, round_res.asr)
+                log.info(
+                    "round %d: %d/%d bypassed (ASR %.2f)",
+                    rnd,
+                    len(round_res.bypasses),
+                    round_res.attempts,
+                    round_res.asr,
+                )
                 proposals = promoted_now = gate_failures = harmful = 0
                 for campaign in round_res.bypasses:
                     self.store.campaign(campaign, bypass=True)
@@ -164,7 +170,16 @@ class LoopRunner:
                         report_id = self.store.gate_report(report)
                         if not report.passed:
                             gate_failures += 1
-                            self.store.candidate(campaign.id, campaign.id, prop.author, prop.rule, report.rule_hash, "failed", report.stages[-1].stage, report_id)
+                            self.store.candidate(
+                                campaign.id,
+                                campaign.id,
+                                prop.author,
+                                prop.rule,
+                                report.rule_hash,
+                                "failed",
+                                report.stages[-1].stage,
+                                report_id,
+                            )
                             continue
                         g3 = next((s for s in report.stages if s.stage == "G3"), None)
                         if g3 and "drop_points" in g3.detail:
@@ -173,7 +188,16 @@ class LoopRunner:
                         # Ungated: promote every proposal, no gate. This is the RQ2 adversary's lever.
                         harmful += self._would_harm(prop.rule, gate)
                     self._promote(stack, promoted, prop.rule, campaign)
-                    self.store.candidate(campaign.id, campaign.id, prop.author, prop.rule, policy_cli.hashes([prop.rule])[prop.rule["id"]], "awaiting_approval" if self.cfg.gated else "approved", "G8" if self.cfg.gated else "enforce", report_id)
+                    self.store.candidate(
+                        campaign.id,
+                        campaign.id,
+                        prop.author,
+                        prop.rule,
+                        policy_cli.hashes([prop.rule])[prop.rule["id"]],
+                        "awaiting_approval" if self.cfg.gated else "approved",
+                        "G8" if self.cfg.gated else "enforce",
+                        report_id,
+                    )
                     promoted_now += 1
                 # Re-arm the gateway and re-measure this round.
                 if promoted_now:
@@ -227,7 +251,9 @@ class LoopRunner:
         self, stack: Stack, promoted: list[dict[str, Any]], rule: dict[str, Any], campaign: Campaign
     ) -> None:
         promoted.append(rule)
-        rec = DefenceRecord(rule["id"], rule["version"], policy_cli.hashes([rule])[rule["id"]], rule, [campaign.signature])
+        rec = DefenceRecord(
+            rule["id"], rule["version"], policy_cli.hashes([rule])[rule["id"]], rule, [campaign.signature]
+        )
         self.memory.remember(rec)
         self.store.defence(rec)
 
@@ -243,7 +269,9 @@ def run_loop_experiment(
     blend_rate: float = 0.0,
 ) -> dict[str, Any]:
     suite = load_suite(suite_path)
-    res = LoopRunner(suite, LoopConfig(rounds, attempts, gated, seed, start_rules=start_rules, blend_rate=blend_rate)).run()
+    res = LoopRunner(
+        suite, LoopConfig(rounds, attempts, gated, seed, start_rules=start_rules, blend_rate=blend_rate)
+    ).run()
     out = out_dir or (Path("results") / "loop" / res.run_id)
     out.mkdir(parents=True, exist_ok=True)
     payload = {

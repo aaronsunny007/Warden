@@ -224,7 +224,16 @@ def build_benign() -> list[dict[str, object]]:
     # cannot learn the carrier instead of the instruction.
     for ci, carrier in enumerate(CARRIERS):
         for filler in BENIGN_FILLERS:
-            rows.append({"text": carrier.format(attack=filler), "label": "benign", "family": "carrier", "template": 100 + ci, "goal": "", "channel": "output"})
+            rows.append(
+                {
+                    "text": carrier.format(attack=filler),
+                    "label": "benign",
+                    "family": "carrier",
+                    "template": 100 + ci,
+                    "goal": "",
+                    "channel": "output",
+                }
+            )
     for ti, t in enumerate(BENIGN_TEMPLATES):
         for _ in range(10):
             name = rng.choice(NAMES)
@@ -267,9 +276,27 @@ def build_benign() -> list[dict[str, object]]:
     # Benign tool outputs: confirmations and records that *report* actions the attacks *request*.
     world = json.loads((ROOT / "data" / "lab" / "world.json").read_text())
     for c in world["customers"]:
-        rows.append({"text": json.dumps(c, indent=2), "label": "benign", "family": "tool_output", "template": 200, "goal": "", "channel": "output"})
+        rows.append(
+            {
+                "text": json.dumps(c, indent=2),
+                "label": "benign",
+                "family": "tool_output",
+                "template": 200,
+                "goal": "",
+                "channel": "output",
+            }
+        )
     for t in world["tickets"]:
-        rows.append({"text": json.dumps(t, indent=2), "label": "benign", "family": "tool_output", "template": 201, "goal": "", "channel": "output"})
+        rows.append(
+            {
+                "text": json.dumps(t, indent=2),
+                "label": "benign",
+                "family": "tool_output",
+                "template": 201,
+                "goal": "",
+                "channel": "output",
+            }
+        )
     confirmations = [
         "Refunded {amt} to customer {cid}.",
         "Note updated for {cid}.",
@@ -284,7 +311,18 @@ def build_benign() -> list[dict[str, object]]:
     for ti, t in enumerate(confirmations):
         for _ in range(6):
             c = rng.choice(world["customers"])
-            rows.append({"text": t.format(amt=f"{rng.uniform(5, 480):.2f}", cid=c["id"], n=rng.randint(1, 30), email=c["email"]), "label": "benign", "family": "tool_output", "template": 210 + ti, "goal": "", "channel": "output"})
+            rows.append(
+                {
+                    "text": t.format(
+                        amt=f"{rng.uniform(5, 480):.2f}", cid=c["id"], n=rng.randint(1, 30), email=c["email"]
+                    ),
+                    "label": "benign",
+                    "family": "tool_output",
+                    "template": 210 + ti,
+                    "goal": "",
+                    "channel": "output",
+                }
+            )
     for r in rows:
         r["split"] = "test_iid" if rng.random() < 0.3 else "dev"
     return rows

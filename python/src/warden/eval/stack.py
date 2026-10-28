@@ -265,7 +265,9 @@ class Stack(AbstractContextManager["Stack"]):
         url = self.gateway_url(gid)
         if not url:
             raise KeyError(gid)
-        r = httpx.put(f"{url}/api/v1/policy", json=bundle, headers={"authorization": "Bearer eval"}, timeout=30)
+        r = httpx.put(
+            f"{url}/api/v1/policy", json=bundle, headers={"authorization": "Bearer eval"}, timeout=30
+        )
         if r.status_code != 200:
             raise RuntimeError(f"gateway {gid} rejected bundle: {r.text[:2000]}")
         out: dict[str, Any] = r.json()

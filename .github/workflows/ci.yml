@@ -33,8 +33,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
       - run: pnpm run format:check
-      - run: pnpm -r run typecheck
+      # Build before typecheck: packages resolve each other through their built type declarations.
       - run: pnpm run build
+      - run: pnpm -r run typecheck
       - run: pnpm run test
 
   dashboard-e2e:
@@ -69,8 +70,8 @@ jobs:
           enable-cache: true
       - name: Set up Python
         run: uv python install 3.12
-      - name: Install (base + dev)
-        run: uv sync --group dev
+      - name: Install (dev + agents extra, from the lockfile)
+        run: uv sync --frozen --group dev --extra agents
       - name: Lint (ruff)
         run: uv run ruff check .
       - name: Format (ruff)
@@ -117,9 +118,9 @@ jobs:
           enable-cache: true
       - name: Set up Python
         run: uv python install 3.12
-      - name: Install (base + dev)
+      - name: Install (dev + agents extra, from the lockfile)
         working-directory: python
-        run: uv sync --group dev
+        run: uv sync --frozen --group dev --extra agents
       - name: Migrate the test database
         working-directory: python
         env:
