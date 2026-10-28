@@ -19,3 +19,10 @@ scrape_configs:
     static_configs:
       - targets: ['otel-collector:8889']
         labels: { component: otel-collector }
+
+  # Only resolves when the `backend` profile is also running.
+  - job_name: acme-backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['acme-backend:8081']
+        labels: { component: acme-backend }

@@ -276,6 +276,19 @@ services:
         condition: service_healthy
     restart: 'no'
 
+  # ---- Acme Support backend (profile: backend) ----
+  # The "real" enterprise application the lab mirrors. Standalone (the MCP lab servers hold their
+  # own synthetic state); runnable here to exercise its REST API and Prometheus metrics.
+  acme-backend:
+    image: warden/acme-backend:dev
+    build:
+      context: ../../services/acme-backend
+      dockerfile: Dockerfile
+    profiles: [backend]
+    ports:
+      - '8081:8081'
+    restart: unless-stopped
+
 volumes:
   pgdata:
   policy:
