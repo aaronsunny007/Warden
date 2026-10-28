@@ -1,0 +1,31 @@
+{
+  "name": "warden",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Validation-gated, self-improving security gateway for AI agents and their MCP tools",
+  "license": "Apache-2.0",
+  "author": "Sunny Aaron",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter ./packages/** run build",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r --filter ./packages/** run test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "demo": "pnpm --filter @warden/gateway run demo"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.13.0",
+    "prettier": "^3.6.2",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^4.1.12"
+  }
+}

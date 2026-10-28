@@ -1,0 +1,1135 @@
+{
+  "$id": "https://warden.dev/schema/policy-ir.schema.json",
+  "title": "Warden Policy IR",
+  "rule": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9-]{2,63}$"
+      },
+      "version": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000000
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "mode": {
+        "type": "string",
+        "enum": ["off", "shadow", "canary", "enforce"]
+      },
+      "canaryPercent": {
+        "default": 10,
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100
+      },
+      "severity": {
+        "type": "string",
+        "enum": ["low", "medium", "high", "critical"]
+      },
+      "action": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["block", "redact", "step_up", "quarantine_tool", "taint_session"]
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": ["type"],
+        "additionalProperties": false
+      },
+      "scope": {
+        "type": "object",
+        "properties": {
+          "channels": {
+            "minItems": 1,
+            "maxItems": 3,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["description", "arguments", "output"]
+            }
+          },
+          "servers": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_.*-]+$"
+            }
+          },
+          "tools": {
+            "maxItems": 64,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9_.*-]+$"
+            }
+          },
+          "riskTiers": {
+            "minItems": 1,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["read_only", "internal_write", "external_send", "financial_destructive"]
+            }
+          },
+          "taint": {
+            "default": "any",
+            "type": "string",
+            "enum": ["any", "tainted", "clean"]
+          }
+        },
+        "required": ["channels"],
+        "additionalProperties": false
+      },
+      "match": {
+        "$ref": "#/$defs/__schema0"
+      },
+      "owasp": {
+        "default": [],
+        "maxItems": 10,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^(ASI|MCP)(0[1-9]|10)$"
+        }
+      },
+      "provenance": {
+        "type": "object",
+        "properties": {
+          "author": {
+            "type": "string",
+            "enum": ["human", "template", "memory", "llm"]
+          },
+          "campaign": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "parent": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "createdAt": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": ["author"],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "id",
+      "version",
+      "description",
+      "mode",
+      "severity",
+      "action",
+      "scope",
+      "match",
+      "provenance"
+    ],
+    "additionalProperties": false,
+    "$defs": {
+      "__schema0": {
+        "anyOf": [
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "text"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": ["contains", "equals", "startsWith", "endsWith", "regex", "anyOf"]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      {
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      }
+                    ]
+                  },
+                  "caseInsensitive": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "normalize": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": ["kind", "op", "value"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "decoded"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "encodings": {
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["base64", "hex", "url", "rot13"]
+                    }
+                  },
+                  "anyOf": {
+                    "minItems": 1,
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                },
+                "required": ["kind", "encodings", "anyOf"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "url"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "hostIn": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 253,
+                      "pattern": "^(\\*\\.)?[A-Za-z0-9.-]+$"
+                    }
+                  },
+                  "hostNotIn": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 253,
+                      "pattern": "^(\\*\\.)?[A-Za-z0-9.-]+$"
+                    }
+                  },
+                  "privateAddress": {
+                    "type": "boolean"
+                  },
+                  "schemeNotIn": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9+.-]{0,15}$"
+                    }
+                  },
+                  "queryLengthGt": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65536
+                  },
+                  "markdownImage": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "secret"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "types": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "aws_access_key",
+                        "github_token",
+                        "slack_token",
+                        "stripe_key",
+                        "openai_key",
+                        "anthropic_key",
+                        "google_api_key",
+                        "private_key",
+                        "jwt",
+                        "connection_string",
+                        "card_number",
+                        "canary_token"
+                      ]
+                    }
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hiddenUnicode"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "detector"
+                  },
+                  "layer": {
+                    "type": "string",
+                    "enum": ["L1", "L2", "L3", "max"]
+                  },
+                  "gte": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": ["kind", "layer", "gte"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "email"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "domainNotIn": {
+                    "minItems": 1,
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 253,
+                      "pattern": "^(\\*\\.)?[A-Za-z0-9.-]+$"
+                    }
+                  }
+                },
+                "required": ["kind", "domainNotIn"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "untraceable"
+                  },
+                  "field": {
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  }
+                },
+                "required": ["kind", "field"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "length"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "gt": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "lt": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "numeric"
+                  },
+                  "field": {
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "gt": {
+                    "type": "number"
+                  },
+                  "lt": {
+                    "type": "number"
+                  }
+                },
+                "required": ["kind", "field"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "toolRef"
+                  },
+                  "field": {
+                    "default": "description",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "all": {
+                "minItems": 1,
+                "maxItems": 48,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              }
+            },
+            "required": ["all"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "any": {
+                "minItems": 1,
+                "maxItems": 48,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              }
+            },
+            "required": ["any"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "not": {
+                "$ref": "#/$defs/__schema0"
+              }
+            },
+            "required": ["not"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "schema": {
+        "type": "string",
+        "const": "warden.policy-bundle/v1"
+      },
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      },
+      "createdAt": {
+        "type": "string",
+        "maxLength": 40
+      },
+      "rules": {
+        "maxItems": 2000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9-]{2,63}$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "mode": {
+              "type": "string",
+              "enum": ["off", "shadow", "canary", "enforce"]
+            },
+            "canaryPercent": {
+              "default": 10,
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "severity": {
+              "type": "string",
+              "enum": ["low", "medium", "high", "critical"]
+            },
+            "action": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": ["block", "redact", "step_up", "quarantine_tool", "taint_session"]
+                },
+                "message": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              "required": ["type"],
+              "additionalProperties": false
+            },
+            "scope": {
+              "type": "object",
+              "properties": {
+                "channels": {
+                  "minItems": 1,
+                  "maxItems": 3,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["description", "arguments", "output"]
+                  }
+                },
+                "servers": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_.*-]+$"
+                  }
+                },
+                "tools": {
+                  "maxItems": 64,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128,
+                    "pattern": "^[A-Za-z0-9_.*-]+$"
+                  }
+                },
+                "riskTiers": {
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": ["read_only", "internal_write", "external_send", "financial_destructive"]
+                  }
+                },
+                "taint": {
+                  "default": "any",
+                  "type": "string",
+                  "enum": ["any", "tainted", "clean"]
+                }
+              },
+              "required": ["channels"],
+              "additionalProperties": false
+            },
+            "match": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "owasp": {
+              "default": [],
+              "maxItems": 10,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(ASI|MCP)(0[1-9]|10)$"
+              }
+            },
+            "provenance": {
+              "type": "object",
+              "properties": {
+                "author": {
+                  "type": "string",
+                  "enum": ["human", "template", "memory", "llm"]
+                },
+                "campaign": {
+                  "type": "string",
+                  "maxLength": 128
+                },
+                "parent": {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                "createdAt": {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                "note": {
+                  "type": "string",
+                  "maxLength": 500
+                }
+              },
+              "required": ["author"],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "id",
+            "version",
+            "description",
+            "mode",
+            "severity",
+            "action",
+            "scope",
+            "match",
+            "provenance"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "approvals": {
+        "default": [],
+        "maxItems": 4000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ruleId": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z0-9-]{2,63}$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "ruleHash": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "stage": {
+              "type": "string",
+              "enum": ["shadow", "canary", "enforce"]
+            },
+            "gateReport": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "approvedBy": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "human": {
+              "type": "boolean"
+            },
+            "approvedAt": {
+              "type": "string",
+              "maxLength": 40
+            }
+          },
+          "required": [
+            "ruleId",
+            "version",
+            "ruleHash",
+            "stage",
+            "gateReport",
+            "approvedBy",
+            "human",
+            "approvedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "signature": {
+        "type": "object",
+        "properties": {
+          "alg": {
+            "type": "string",
+            "const": "ed25519"
+          },
+          "keyId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "sig": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "required": ["alg", "keyId", "sig"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["schema", "id", "createdAt", "rules"],
+    "additionalProperties": false,
+    "$defs": {
+      "__schema0": {
+        "anyOf": [
+          {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "text"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "op": {
+                    "type": "string",
+                    "enum": ["contains", "equals", "startsWith", "endsWith", "regex", "anyOf"]
+                  },
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      {
+                        "minItems": 1,
+                        "maxItems": 64,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      }
+                    ]
+                  },
+                  "caseInsensitive": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "normalize": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": ["kind", "op", "value"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "decoded"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "encodings": {
+                    "minItems": 1,
+                    "maxItems": 4,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["base64", "hex", "url", "rot13"]
+                    }
+                  },
+                  "anyOf": {
+                    "minItems": 1,
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                },
+                "required": ["kind", "encodings", "anyOf"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "url"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "hostIn": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 253,
+                      "pattern": "^(\\*\\.)?[A-Za-z0-9.-]+$"
+                    }
+                  },
+                  "hostNotIn": {
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 253,
+                      "pattern": "^(\\*\\.)?[A-Za-z0-9.-]+$"
+                    }
+                  },
+                  "privateAddress": {
+                    "type": "boolean"
+                  },
+                  "schemeNotIn": {
+                    "maxItems": 16,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9+.-]{0,15}$"
+                    }
+                  },
+                  "queryLengthGt": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65536
+                  },
+                  "markdownImage": {
+                    "type": "boolean"
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "secret"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "types": {
+                    "minItems": 1,
+                    "maxItems": 12,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "aws_access_key",
+                        "github_token",
+                        "slack_token",
+                        "stripe_key",
+                        "openai_key",
+                        "anthropic_key",
+                        "google_api_key",
+                        "private_key",
+                        "jwt",
+                        "connection_string",
+                        "card_number",
+                        "canary_token"
+                      ]
+                    }
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "hiddenUnicode"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "detector"
+                  },
+                  "layer": {
+                    "type": "string",
+                    "enum": ["L1", "L2", "L3", "max"]
+                  },
+                  "gte": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": ["kind", "layer", "gte"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "email"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "domainNotIn": {
+                    "minItems": 1,
+                    "maxItems": 64,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 253,
+                      "pattern": "^(\\*\\.)?[A-Za-z0-9.-]+$"
+                    }
+                  }
+                },
+                "required": ["kind", "domainNotIn"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "untraceable"
+                  },
+                  "field": {
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  }
+                },
+                "required": ["kind", "field"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "length"
+                  },
+                  "field": {
+                    "default": "text",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "gt": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "lt": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "numeric"
+                  },
+                  "field": {
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  },
+                  "gt": {
+                    "type": "number"
+                  },
+                  "lt": {
+                    "type": "number"
+                  }
+                },
+                "required": ["kind", "field"],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "toolRef"
+                  },
+                  "field": {
+                    "default": "description",
+                    "type": "string",
+                    "pattern": "^(text|tool|server|qualifiedTool|description|args(\\.(\\*\\*|\\*|[A-Za-z0-9_-]{1,64})){1,6})$"
+                  }
+                },
+                "required": ["kind"],
+                "additionalProperties": false
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "all": {
+                "minItems": 1,
+                "maxItems": 48,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              }
+            },
+            "required": ["all"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "any": {
+                "minItems": 1,
+                "maxItems": 48,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/__schema0"
+                }
+              }
+            },
+            "required": ["any"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "not": {
+                "$ref": "#/$defs/__schema0"
+              }
+            },
+            "required": ["not"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  }
+}
