@@ -8,7 +8,7 @@ RUN mvn -B -q dependency:go-offline
 COPY src ./src
 RUN mvn -B -q clean package -DskipTests
 
-FROM eclipse-temurin:21-jre AS runtime
+FROM eclipse-temurin:24-jre AS runtime
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin acme
 WORKDIR /app
 COPY --from=build /src/target/acme-support-*.jar app.jar
