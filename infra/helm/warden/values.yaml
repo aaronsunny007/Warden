@@ -1,0 +1,88 @@
+# Default values for the Warden lab chart.
+# Lab/evaluation use only — all data is synthetic and the defaults favour a self-contained run
+# on a local cluster (kind/minikube), not a production deployment.
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Images. With a local kind cluster, build the images (infra/docker/*) and load them in with
+# `kind load docker-image ...`; pullPolicy IfNotPresent then uses the loaded copy.
+images:
+  node: { repository: warden/node, tag: dev }
+  python: { repository: warden/python, tag: dev }
+  dashboard: { repository: warden/dashboard, tag: dev }
+  postgres: { repository: pgvector/pgvector, tag: pg16 }
+  redis: { repository: redis, tag: 7-alpine }
+pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# Gateway admin API bearer token. Blank = no auth (fine for a local lab). When set, it is stored
+# in a Secret and injected into the gateway, control plane and dashboard.
+adminToken: ""
+
+# The detection cascade. L3 (LLM judge) stays off unless ollamaUrl and judgeModel are set.
+detector:
+  replicas: 1
+  cascade: full
+  l2Mode: lite
+  index: pgvector
+  ollamaUrl: ""
+  judgeModel: ""
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+gateway:
+  replicas: 1
+  # Enforcement always requires the control plane's G8 approval; the chart ships the baseline in
+  # shadow mode via the policy-init Job (a dev key is generated into a PVC, never committed).
+  requireHumanApproval: true
+  otlpEndpoint: ""
+  service:
+    type: ClusterIP
+    port: 8787
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { cpu: "1", memory: 768Mi }
+
+lab:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+control:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+dashboard:
+  replicas: 1
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+postgres:
+  enabled: true
+  auth: { username: warden, password: warden, database: warden }
+  persistence: { enabled: false, size: 2Gi }
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: "1", memory: 1Gi }
+
+redis:
+  enabled: true
+  resources:
+    requests: { cpu: 25m, memory: 64Mi }
+    limits: { cpu: 250m, memory: 256Mi }
+
+# Optional ingress for the dashboard.
+ingress:
+  enabled: false
+  className: ""
+  host: warden.local
+  annotations: {}

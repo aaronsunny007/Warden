@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "warden.fullname" . }}-gateway
+  labels: {{- include "warden.labels" . | nindent 4 }}
+data:
+  warden.yaml: |
+    listen:
+      host: 0.0.0.0
+      port: 8787
+    allowedHosts: [localhost, 127.0.0.1, gateway, dashboard]
+    admin:
+      enabled: true
+      token: ${WARDEN_ADMIN_TOKEN:-}
+    policy:
+      bundle: /policy/baseline.bundle.json
+      trustedKeys:
+        warden-dev: /policy/warden-dev.pub.pem
+      allowUnsigned: false
+      requireHumanApproval: {{ .Values.gateway.requireHumanApproval }}
+      watch: true
+    servers:
+      - { name: email, transport: { type: http, url: http://lab:8790/mcp/email }, trust: trusted, taintSources: [read_email] }
+      - { name: customers, transport: { type: http, url: http://lab:8790/mcp/customers }, trust: trusted }
+      - { name: files, transport: { type: http, url: http://lab:8790/mcp/files }, trust: trusted, taintSources: [read_file] }
+      - { name: web, transport: { type: http, url: http://lab:8790/mcp/web }, trust: trusted, taintSources: [fetch_url] }
+      - { name: tickets, transport: { type: http, url: http://lab:8790/mcp/tickets }, trust: trusted, taintSources: [get_ticket] }
+      - { name: payments, transport: { type: http, url: http://lab:8790/mcp/payments }, trust: trusted }
+      - { name: facts, transport: { type: http, url: http://lab:8790/mcp/facts }, trust: untrusted }
+      - { name: weather, transport: { type: http, url: http://lab:8790/mcp/weather }, trust: untrusted }
+    detector:
+      url: http://detector:8000
+      timeoutMs: 400
+      channels: [description, arguments, output]
+      cacheTtlSeconds: 600
+    pins:
+      enabled: true
+      store: redis
+      autoApproveClean: true
+      refreshSeconds: 30
+    state:
+      redisUrl: redis://redis:6379
+    events:
+      jsonl: /var/warden/verdicts.jsonl
+      ringSize: 5000
+      recordMessages: true
+      postgres:
+        url: {{ include "warden.pgDatabaseUrl" . }}
+    spotlight:
+      enabled: true
+    failure:
+      highRisk: closed
+      readOnly: open
+    stepUp:
+      elicitation: true
+      approvalTtlSeconds: 900
+    telemetry:
+      otlpEndpoint: ${WARDEN_OTLP_ENDPOINT:-}
+      serviceName: warden-gateway
+  init-policy.sh: |
+    #!/bin/sh
+    set -eu
+    POLICY_DIR=/policy; KEY_ID=warden-dev
+    if [ -f "$POLICY_DIR/baseline.bundle.json" ] && [ -f "$POLICY_DIR/$KEY_ID.pub.pem" ]; then exit 0; fi
+    node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8")).map(x=>({...x,mode:"shadow"}));fs.writeFileSync(process.argv[2],JSON.stringify(r))' /app/policies/baseline.rules.json "$POLICY_DIR/rules.shadow.json"
+    node packages/policy-ir/dist/cli.js keygen --key-id "$KEY_ID" --out-dir "$POLICY_DIR" >/dev/null
+    node packages/policy-ir/dist/cli.js bundle --rules "$POLICY_DIR/rules.shadow.json" --id baseline-demo --out "$POLICY_DIR/unsigned.json"
+    node packages/policy-ir/dist/cli.js sign --bundle "$POLICY_DIR/unsigned.json" --key "$POLICY_DIR/$KEY_ID.key.pem" --key-id "$KEY_ID" --out "$POLICY_DIR/baseline.bundle.json"

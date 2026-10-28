@@ -1,0 +1,11 @@
+# A single-node kind cluster for the Warden lab. The dashboard and gateway are reached with
+# `kubectl port-forward` (see README); no ingress controller is required.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: warden
+nodes:
+  - role: control-plane
+    # Optional: expose a NodePort range if you prefer NodePort Services over port-forward.
+    # extraPortMappings:
+    #   - { containerPort: 30030, hostPort: 3000 }   # dashboard (if exposed as NodePort 30030)
+    #   - { containerPort: 30087, hostPort: 8787 }   # gateway  (if exposed as NodePort 30087)

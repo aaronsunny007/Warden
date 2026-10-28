@@ -1,0 +1,22 @@
+Warden ({{ .Chart.AppVersion }}) is installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+This is a lab/evaluation deployment — all data is synthetic.
+
+The gateway loads the baseline ruleset in SHADOW mode (it inspects every MCP description, argument
+and output and records what it would block, without blocking). Promoting a rule to enforce goes
+through the control plane's G8 approval.
+
+Open the dashboard:
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/dashboard {{ .Values.dashboard.service.port }}:{{ .Values.dashboard.service.port }}
+  # then browse to http://localhost:{{ .Values.dashboard.service.port }}
+
+Gateway admin API (status / verdicts / metrics):
+
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/gateway {{ .Values.gateway.service.port }}:{{ .Values.gateway.service.port }}
+  # http://localhost:{{ .Values.gateway.service.port }}/api/v1/status
+
+{{- if not .Values.adminToken }}
+
+NOTE: no admin token is set (adminToken=""), so the admin API is open. Set --set adminToken=... for anything beyond a local cluster.
+{{- end }}

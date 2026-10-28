@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "warden.fullname" . }}-migrate
+  labels: {{- include "warden.labels" . | nindent 4 }}
+  annotations:
+    # Run after the main resources (so postgres exists), on every install and upgrade.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels: {{- include "warden.selectorLabels" (dict "root" . "component" "migrate") | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: "{{ .Values.images.python.repository }}:{{ .Values.images.python.tag }}"
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "waiting for postgres"
+              until python -c "import os; from sqlalchemy import create_engine; create_engine(os.environ['WARDEN_DATABASE_URL']).connect().close()" 2>/dev/null; do sleep 2; done
+              cd /app && alembic upgrade head
+          env:
+            - { name: WARDEN_DATABASE_URL, value: {{ include "warden.pyDatabaseUrl" . | quote }} }

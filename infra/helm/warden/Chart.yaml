@@ -1,0 +1,16 @@
+apiVersion: v2
+name: warden
+description: >-
+  Warden — a validation-gated, self-improving security gateway between AI agents and their MCP
+  tool servers. This chart deploys the full lab stack (gateway, Acme Support lab MCP servers,
+  detection cascade, control plane, dashboard) with Postgres (pgvector) and Redis. Lab/evaluation
+  use only; all data is synthetic.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords: [mcp, ai-security, prompt-injection, owasp, agentic]
+home: https://github.com/aaronsunny007/Warden
+sources:
+  - https://github.com/aaronsunny007/Warden
+maintainers:
+  - name: Sunny Aaron

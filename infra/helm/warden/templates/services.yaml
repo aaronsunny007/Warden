@@ -1,0 +1,164 @@
+# The lab MCP servers, the detection cascade, the control plane and the dashboard.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "warden.fullname" . }}-lab
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.lab.replicas }}
+  selector:
+    matchLabels: {{- include "warden.selectorLabels" (dict "root" . "component" "lab") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "warden.selectorLabels" (dict "root" . "component" "lab") | nindent 8 }}
+    spec:
+      containers:
+        - name: lab
+          image: "{{ .Values.images.node.repository }}:{{ .Values.images.node.tag }}"
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          command: ["node", "packages/lab-servers/dist/cli.js", "http", "--host", "0.0.0.0", "--port", "8790"]
+          ports: [{ name: http, containerPort: 8790 }]
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources: {{- toYaml .Values.lab.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "warden.selectorLabels" (dict "root" . "component" "lab") | nindent 4 }}
+  ports: [{ name: http, port: 8790, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "warden.fullname" . }}-detector
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.detector.replicas }}
+  selector:
+    matchLabels: {{- include "warden.selectorLabels" (dict "root" . "component" "detector") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "warden.selectorLabels" (dict "root" . "component" "detector") | nindent 8 }}
+    spec:
+      initContainers:
+        {{- include "warden.waitForSchema" . | nindent 8 }}
+      containers:
+        - name: detector
+          image: "{{ .Values.images.python.repository }}:{{ .Values.images.python.tag }}"
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          command: ["warden", "detector", "serve", "--host", "0.0.0.0", "--port", "8000"]
+          env:
+            - { name: WARDEN_DATABASE_URL, value: {{ include "warden.pyDatabaseUrl" . | quote }} }
+            - { name: WARDEN_REDIS_URL, value: "redis://redis:6379" }
+            - { name: WARDEN_INDEX, value: {{ .Values.detector.index | quote }} }
+            - { name: WARDEN_CASCADE, value: {{ .Values.detector.cascade | quote }} }
+            - { name: WARDEN_L2_MODE, value: {{ .Values.detector.l2Mode | quote }} }
+            - { name: WARDEN_OLLAMA_URL, value: {{ .Values.detector.ollamaUrl | quote }} }
+            - { name: WARDEN_JUDGE_MODEL, value: {{ .Values.detector.judgeModel | quote }} }
+          ports: [{ name: http, containerPort: 8000 }]
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources: {{- toYaml .Values.detector.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: detector
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "warden.selectorLabels" (dict "root" . "component" "detector") | nindent 4 }}
+  ports: [{ name: http, port: 8000, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "warden.fullname" . }}-control
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.control.replicas }}
+  selector:
+    matchLabels: {{- include "warden.selectorLabels" (dict "root" . "component" "control") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "warden.selectorLabels" (dict "root" . "component" "control") | nindent 8 }}
+    spec:
+      initContainers:
+        {{- include "warden.waitForSchema" . | nindent 8 }}
+      containers:
+        - name: control
+          image: "{{ .Values.images.python.repository }}:{{ .Values.images.python.tag }}"
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          command: ["warden", "control", "serve", "--host", "0.0.0.0", "--port", "8008"]
+          env:
+            - { name: WARDEN_DATABASE_URL, value: {{ include "warden.pyDatabaseUrl" . | quote }} }
+            - { name: WARDEN_GATEWAY_URL, value: "http://gateway:8787" }
+            {{- include "warden.adminTokenEnv" . | nindent 12 }}
+            {{- if .Values.adminToken }}
+            - name: WARDEN_GATEWAY_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "warden.secretName" . }}, key: admin-token }
+            {{- end }}
+          ports: [{ name: http, containerPort: 8008 }]
+          readinessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources: {{- toYaml .Values.control.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: control
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  selector: {{- include "warden.selectorLabels" (dict "root" . "component" "control") | nindent 4 }}
+  ports: [{ name: http, port: 8008, targetPort: http }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "warden.fullname" . }}-dashboard
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.dashboard.replicas }}
+  selector:
+    matchLabels: {{- include "warden.selectorLabels" (dict "root" . "component" "dashboard") | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "warden.selectorLabels" (dict "root" . "component" "dashboard") | nindent 8 }}
+    spec:
+      containers:
+        - name: dashboard
+          image: "{{ .Values.images.dashboard.repository }}:{{ .Values.images.dashboard.tag }}"
+          imagePullPolicy: {{ .Values.pullPolicy }}
+          env:
+            # The dashboard proxies /admin and /control to these services (baked at build; the
+            # short names resolve in this namespace).
+            - { name: WARDEN_GATEWAY_URL, value: "http://gateway:8787" }
+            - { name: WARDEN_CONTROL_URL, value: "http://control:8008" }
+            {{- include "warden.adminTokenEnv" . | nindent 12 }}
+          ports: [{ name: http, containerPort: 3000 }]
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources: {{- toYaml .Values.dashboard.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+  labels: {{- include "warden.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.dashboard.service.type }}
+  selector: {{- include "warden.selectorLabels" (dict "root" . "component" "dashboard") | nindent 4 }}
+  ports: [{ name: http, port: {{ .Values.dashboard.service.port }}, targetPort: http }]
