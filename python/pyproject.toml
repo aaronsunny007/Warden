@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-agents = ["langgraph>=1.0", "langchain-core>=1.0", "langchain-ollama>=1.0", "mcp>=2.0"]
+agents = ["langgraph>=1.0", "langchain-core>=1.0", "langchain-ollama>=1.0", "mcp>=2.3.0"]
 ml = ["sentence-transformers>=5.0", "onnxruntime>=1.22", "tokenizers>=0.21"]
 kafka = ["aiokafka>=0.12"]
 bench = ["agentdojo>=0.1.35"]
