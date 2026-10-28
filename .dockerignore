@@ -1,0 +1,22 @@
+# Keep build contexts small and reproducible: never ship local state or build output.
+**/node_modules
+**/.next
+**/dist
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/coverage
+**/test-results
+**/playwright-report
+results
+var
+.git
+*.log
+# Secrets and local policy material are generated at runtime, never baked into an image.
+**/*.key.pem
+**/*.key
+.env
+**/.env

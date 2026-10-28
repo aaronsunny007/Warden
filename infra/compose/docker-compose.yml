@@ -1,0 +1,282 @@
+# Warden lab stack. Everything here is synthetic and for local evaluation only.
+#
+#   cd infra/compose
+#   cp .env.example .env            # optional: set an admin token
+#   docker compose up --build       # core stack: gateway + lab + detector + control + dashboard
+#
+# Optional profiles (add --profile <name>, repeatable):
+#   obs     Prometheus + Grafana + OpenTelemetry collector
+#   kafka   Apache Kafka (KRaft) + the audit-log consumer
+#   demo    one-shot: seed corpora, run a short benign+attack pass, print the verdict summary
+#
+# Dashboard:  http://localhost:3000     Gateway admin:  http://localhost:8787/api/v1/status
+# Grafana (obs profile): http://localhost:3001  (anonymous viewer)
+
+name: warden
+
+x-python-image: &python-image
+  build:
+    context: ../..
+    dockerfile: infra/docker/python.Dockerfile
+  image: warden/python:dev
+
+services:
+  # ---- datastores ----
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: warden
+      POSTGRES_PASSWORD: warden
+      POSTGRES_DB: warden
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U warden -d warden']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # ---- one-shots: schema migration and the signed baseline bundle ----
+  db-migrate:
+    <<: *python-image
+    command: ['sh', '-c', 'cd /app && alembic upgrade head']
+    environment:
+      WARDEN_DATABASE_URL: postgresql+psycopg://warden:warden@postgres:5432/warden
+    entrypoint: []
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  policy-init:
+    build:
+      context: ../..
+      dockerfile: infra/docker/node.Dockerfile
+    image: warden/node:dev
+    entrypoint: ['sh', '/etc/warden/init-policy.sh']
+    volumes:
+      - ./config/init-policy.sh:/etc/warden/init-policy.sh:ro
+      - policy:/policy
+    restart: 'no'
+
+  # ---- Warden data plane ----
+  lab:
+    image: warden/node:dev
+    build:
+      context: ../..
+      dockerfile: infra/docker/node.Dockerfile
+    command: ['packages/lab-servers/dist/cli.js', 'http', '--host', '0.0.0.0', '--port', '8790']
+    environment:
+      HOST: 0.0.0.0
+      PORT: '8790'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8790/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  detector:
+    <<: *python-image
+    command: ['detector', 'serve', '--host', '0.0.0.0', '--port', '8000']
+    environment:
+      WARDEN_DATABASE_URL: postgresql+psycopg://warden:warden@postgres:5432/warden
+      WARDEN_REDIS_URL: redis://redis:6379
+      WARDEN_INDEX: pgvector
+      WARDEN_CASCADE: full
+      WARDEN_L2_MODE: lite
+      # L3 (LLM judge) is off unless an Ollama endpoint and model are provided.
+      WARDEN_OLLAMA_URL: ${WARDEN_OLLAMA_URL:-}
+      WARDEN_JUDGE_MODEL: ${WARDEN_JUDGE_MODEL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz').status==200 else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  gateway:
+    image: warden/node:dev
+    build:
+      context: ../..
+      dockerfile: infra/docker/node.Dockerfile
+    command: ['packages/gateway/dist/cli.js', 'serve', '--config', '/etc/warden/warden.yaml']
+    environment:
+      WARDEN_ADMIN_TOKEN: ${WARDEN_ADMIN_TOKEN:-}
+      WARDEN_DETECTOR_URL: http://detector:8000
+      WARDEN_REDIS_URL: redis://redis:6379
+      WARDEN_DATABASE_URL: postgresql://warden:warden@postgres:5432/warden
+      WARDEN_OTLP_ENDPOINT: ${WARDEN_OTLP_ENDPOINT:-}
+    volumes:
+      - ./config/warden.yaml:/etc/warden/warden.yaml:ro
+      - policy:/policy:ro
+      - verdicts:/var/warden
+    ports:
+      - '8787:8787'
+    depends_on:
+      lab:
+        condition: service_healthy
+      detector:
+        condition: service_healthy
+      policy-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  control:
+    <<: *python-image
+    command: ['control', 'serve', '--host', '0.0.0.0', '--port', '8008']
+    environment:
+      WARDEN_DATABASE_URL: postgresql+psycopg://warden:warden@postgres:5432/warden
+      WARDEN_GATEWAY_URL: http://gateway:8787
+      WARDEN_GATEWAY_ADMIN_TOKEN: ${WARDEN_ADMIN_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8008/healthz').status==200 else 1)"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  dashboard:
+    image: warden/dashboard:dev
+    build:
+      context: ../..
+      dockerfile: apps/dashboard/Dockerfile
+    environment:
+      # The dashboard proxies /admin -> gateway and /control -> control plane (next.config rewrites).
+      WARDEN_GATEWAY_URL: http://gateway:8787
+      WARDEN_CONTROL_URL: http://control:8008
+      NODE_ENV: production
+    ports:
+      - '3000:3000'
+    depends_on:
+      gateway:
+        condition: service_healthy
+      control:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---- observability (profile: obs) ----
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.116.0
+    profiles: [obs]
+    command: ['--config=/etc/otel/collector.yaml']
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otel/collector.yaml:ro
+    ports:
+      - '4318:4318'
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    profiles: [obs]
+    command: ['--config.file=/etc/prometheus/prometheus.yml']
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    profiles: [obs]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: warden
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - '3001:3000'
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # ---- audit pipeline (profile: kafka) ----
+  kafka:
+    image: apache/kafka:3.9.0
+    profiles: [kafka]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: ['CMD-SHELL', '/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  audit-consumer:
+    <<: *python-image
+    profiles: [kafka]
+    command: ['audit', 'consume', '--brokers', 'kafka:9092', '--topic', 'warden.verdicts']
+    environment:
+      WARDEN_DATABASE_URL: postgresql+psycopg://warden:warden@postgres:5432/warden
+    depends_on:
+      kafka:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ---- replay demo (profile: demo) ----
+  demo:
+    <<: *python-image
+    profiles: [demo]
+    command: ['sh', '/etc/warden/demo.sh']
+    entrypoint: []
+    environment:
+      WARDEN_GATEWAY_URL: http://gateway:8787
+      WARDEN_LAB_URL: http://lab:8790
+      WARDEN_ADMIN_TOKEN: ${WARDEN_ADMIN_TOKEN:-}
+    volumes:
+      - ./config/demo.sh:/etc/warden/demo.sh:ro
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: 'no'
+
+volumes:
+  pgdata:
+  policy:
+  verdicts:

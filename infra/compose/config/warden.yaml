@@ -1,0 +1,98 @@
+# Gateway configuration for the docker-compose lab. Everything here points at lab containers
+# and synthetic data only. ${VAR:-default} is interpolated from the environment.
+listen:
+  host: 0.0.0.0
+  port: 8787
+
+# DNS-rebinding protection: the MCP endpoint answers only to these host headers.
+allowedHosts: [localhost, 127.0.0.1, gateway]
+
+admin:
+  enabled: true
+  token: ${WARDEN_ADMIN_TOKEN:-}
+
+# The signed baseline bundle produced by the `policy-init` one-shot service.
+policy:
+  bundle: /policy/baseline.bundle.json
+  trustedKeys:
+    warden-dev: /policy/warden-dev.pub.pem
+  allowUnsigned: false
+  # The compose demo ships the baseline in shadow mode, so no human approval is needed to load
+  # it; promoting a rule to enforce still goes through the control plane's G8 approval.
+  requireHumanApproval: true
+  watch: true
+
+# The Acme Support MCP servers (trusted) and the malicious servers (untrusted), all hosted by
+# the lab container over Streamable HTTP at /mcp/<name>.
+servers:
+  - name: email
+    transport: { type: http, url: http://lab:8790/mcp/email }
+    trust: trusted
+    taintSources: [read_email]
+  - name: customers
+    transport: { type: http, url: http://lab:8790/mcp/customers }
+    trust: trusted
+  - name: files
+    transport: { type: http, url: http://lab:8790/mcp/files }
+    trust: trusted
+    taintSources: [read_file]
+  - name: web
+    transport: { type: http, url: http://lab:8790/mcp/web }
+    trust: trusted
+    taintSources: [fetch_url]
+  - name: tickets
+    transport: { type: http, url: http://lab:8790/mcp/tickets }
+    trust: trusted
+    taintSources: [get_ticket]
+  - name: payments
+    transport: { type: http, url: http://lab:8790/mcp/payments }
+    trust: trusted
+  - name: facts
+    transport: { type: http, url: http://lab:8790/mcp/facts }
+    trust: untrusted
+  - name: weather
+    transport: { type: http, url: http://lab:8790/mcp/weather }
+    trust: untrusted
+
+detector:
+  url: ${WARDEN_DETECTOR_URL:-http://detector:8000}
+  timeoutMs: 400
+  channels: [description, arguments, output]
+  cacheTtlSeconds: 600
+
+pins:
+  enabled: true
+  store: redis
+  autoApproveClean: true
+  refreshSeconds: 30
+
+state:
+  redisUrl: ${WARDEN_REDIS_URL:-redis://redis:6379}
+
+events:
+  jsonl: /var/warden/verdicts.jsonl
+  ringSize: 5000
+  recordMessages: true
+  postgres:
+    url: ${WARDEN_DATABASE_URL:-postgresql://warden:warden@postgres:5432/warden}
+  kafka:
+    brokers: [kafka:9092]
+    topic: warden.verdicts
+    clientId: warden-gateway
+
+spotlight:
+  enabled: true
+
+failure:
+  highRisk: closed
+  readOnly: open
+
+stepUp:
+  elicitation: true
+  approvalTtlSeconds: 900
+
+telemetry:
+  # Empty by default (no tracing). Set WARDEN_OTLP_ENDPOINT=http://otel-collector:4318 in .env
+  # when running the `obs` profile.
+  otlpEndpoint: ${WARDEN_OTLP_ENDPOINT:-}
+  serviceName: warden-gateway
