@@ -142,6 +142,16 @@ export async function registerAdmin(app: FastifyInstance, deps: AdminDeps): Prom
         },
       );
 
+      // Lab only (events.recordMessages): the exact contexts verdicts were computed on.
+      api.get<{ Querystring: { session?: string; limit?: string } }>('/messages', async (req) => {
+        const limit = Math.min(Number(req.query.limit ?? 5000) || 5000, 200000);
+        return bus
+          .recent('message', 200000)
+          .map((e) => e.data as { sessionId: string })
+          .filter((m) => !req.query.session || m.sessionId === req.query.session)
+          .slice(0, limit);
+      });
+
       api.get('/events', async (req, reply) => {
         reply.hijack();
         const res = reply.raw;

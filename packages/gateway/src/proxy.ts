@@ -181,6 +181,7 @@ export class Catalog {
   }
 
   isUsable(e: CatalogEntry): boolean {
+    if (!this.cfg.pins.enabled) return true;
     return e.pin.status === 'approved' && e.pin.approvedHash === e.pin.currentHash;
   }
 

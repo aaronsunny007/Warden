@@ -10,6 +10,7 @@ export interface PolicyStoreOptions {
   path: string;
   trustedKeys: Record<string, string>;
   allowUnsigned: boolean;
+  requireHumanApproval?: boolean;
   watch: boolean;
 }
 
@@ -60,6 +61,7 @@ export class PolicyStore {
     const res = loadBundle(doc, {
       trustedKeys: this.opts.trustedKeys,
       allowUnsigned: this.opts.allowUnsigned,
+      requireHumanForEnforce: this.opts.requireHumanApproval ?? true,
     });
     if (!res.ok) {
       this.lastError = res.errors;

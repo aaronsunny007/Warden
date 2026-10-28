@@ -21,7 +21,7 @@ Commands:
   hash <file>                            print rule hashes (approvals bind to these)
   replay --rules <file> --corpus <jsonl> [--force-mode enforce] [--out <jsonl>]
                                          evaluate rules over recorded messages
-  bundle --rules <file> [--approvals <file>] --id <id> --out <file>
+  bundle --rules <file> [--approvals <file>] --id <id> --out <file> [--allow-machine-approval]
                                          assemble an unsigned bundle
   keygen --key-id <id> --out-dir <dir>   create an Ed25519 signing key pair
   sign --bundle <file> --key <pem> --key-id <id> --out <file>
@@ -108,6 +108,7 @@ async function main(argv: string[]): Promise<number> {
       bundle: { type: 'string' },
       key: { type: 'string' },
       pub: { type: 'string' },
+      'allow-machine-approval': { type: 'boolean' },
     },
   });
   switch (cmd) {
@@ -159,7 +160,11 @@ async function main(argv: string[]): Promise<number> {
         rules: rulesFrom(readJson(values.rules)),
         approvals,
       };
-      const check = loadBundle(bundle, { trustedKeys: {}, allowUnsigned: true });
+      const check = loadBundle(bundle, {
+        trustedKeys: {},
+        allowUnsigned: true,
+        requireHumanForEnforce: !values['allow-machine-approval'],
+      });
       if (!check.ok) {
         console.error(JSON.stringify(check.errors, null, 2));
         return 1;

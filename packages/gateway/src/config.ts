@@ -77,12 +77,22 @@ export const GatewayConfig = z
         bundle: z.string().default(''),
         trustedKeys: z.record(z.string(), z.string()).default({}),
         allowUnsigned: z.boolean().default(false),
+        /** Enforcement needs a human approval (G8). Only lab and CI configs should turn this off. */
+        requireHumanApproval: z.boolean().default(true),
         watch: z.boolean().default(true),
       })
       .strict()
-      .default({ bundle: '', trustedKeys: {}, allowUnsigned: false, watch: true }),
+      .default({
+        bundle: '',
+        trustedKeys: {},
+        allowUnsigned: false,
+        requireHumanApproval: true,
+        watch: true,
+      }),
     pins: z
       .object({
+        /** Pinning and description scanning. Off only for the B0-B2 evaluation baselines. */
+        enabled: z.boolean().default(true),
         store: z.enum(['memory', 'file', 'redis']).default('memory'),
         path: z.string().default('var/pins.json'),
         /** Approve a first-seen tool automatically when its description scan is clean. */
@@ -91,7 +101,13 @@ export const GatewayConfig = z
         refreshSeconds: z.number().int().min(0).default(30),
       })
       .strict()
-      .default({ store: 'memory', path: 'var/pins.json', autoApproveClean: true, refreshSeconds: 30 }),
+      .default({
+        enabled: true,
+        store: 'memory',
+        path: 'var/pins.json',
+        autoApproveClean: true,
+        refreshSeconds: 30,
+      }),
     state: z
       .object({ redisUrl: z.string().default('') })
       .strict()
@@ -108,10 +124,12 @@ export const GatewayConfig = z
           .strict()
           .optional(),
         postgres: z.object({ url: z.string() }).strict().optional(),
-        ringSize: z.number().int().min(10).max(100000).default(2000),
+        ringSize: z.number().int().min(10).max(200000).default(2000),
+        /** Lab only: also emit the exact message context each verdict was computed on (feeds the G2 benign corpus). */
+        recordMessages: z.boolean().default(false),
       })
       .strict()
-      .default({ jsonl: '', ringSize: 2000 }),
+      .default({ jsonl: '', ringSize: 2000, recordMessages: false }),
     spotlight: z
       .object({ enabled: z.boolean().default(true) })
       .strict()

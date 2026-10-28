@@ -239,6 +239,16 @@ export class Inspector {
     for (const m of ev.enforced) this.metrics.ruleHits.inc({ rule_id: m.ruleId, mode: m.mode });
     for (const m of ev.observed) this.metrics.ruleHits.inc({ rule_id: m.ruleId, mode: m.mode });
     this.bus.verdict(v);
+    if (this.cfg.events.recordMessages)
+      this.bus.emit('message', {
+        verdictId: v.id,
+        sessionId: ctx.sessionId,
+        decision,
+        ruleIds: v.ruleIds,
+        layer: v.layer,
+        latencyMs: v.latencyMs,
+        ctx,
+      });
     return v;
   }
 
@@ -422,7 +432,9 @@ export class Inspector {
         });
         this.metrics.taintedSessions.inc();
         taintedNow = true;
-      } else if (!shouldTaint && !session.tainted && decision === 'allow') {
+      } else if (!shouldTaint && decision === 'allow') {
+        // Values from a trusted source are provenance whenever they are read, before or after taint:
+        // the attacker does not control them. Outputs that were redacted or flagged never count.
         await this.taint.addTrustedOutput(sessionId, text);
       }
 

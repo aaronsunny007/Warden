@@ -55,6 +55,8 @@ export interface VerifyOptions {
   allowUnsigned?: boolean;
   /** Skip approval checks (gate replay of candidates only). */
   skipApprovals?: boolean;
+  /** Enforcement needs a human approval (gate stage G8). Default true; lab and CI may turn it off. */
+  requireHumanForEnforce?: boolean;
 }
 
 export interface LoadedBundle {
@@ -66,7 +68,7 @@ export interface LoadedBundle {
 export type LoadResult =
   { ok: true; loaded: LoadedBundle; warnings: CompileIssue[] } | { ok: false; errors: CompileIssue[] };
 
-export function approvalCovers(approvals: Approval[], c: CompiledRule): string | null {
+export function approvalCovers(approvals: Approval[], c: CompiledRule, requireHuman = true): string | null {
   const mode = c.rule.mode;
   if (mode === 'off') return null;
   const matching = approvals.filter((a) => a.ruleId === c.rule.id && a.version === c.rule.version);
@@ -77,7 +79,7 @@ export function approvalCovers(approvals: Approval[], c: CompiledRule): string |
   const best = bound.reduce((a, b) => (STAGE_RANK[b.stage] > STAGE_RANK[a.stage] ? b : a));
   if (STAGE_RANK[best.stage] < STAGE_RANK[mode])
     return `${c.rule.id} is approved for ${best.stage}, not ${mode}`;
-  if (mode === 'enforce' && !bound.some((a) => a.stage === 'enforce' && a.human))
+  if (requireHuman && mode === 'enforce' && !bound.some((a) => a.stage === 'enforce' && a.human))
     return `${c.rule.id} needs a human approval to enforce`;
   return null;
 }
@@ -118,7 +120,7 @@ export function loadBundle(input: unknown, opts: VerifyOptions): LoadResult {
       errors.push({ path: `rules[${f.index}]${f.id ? `(${f.id})` : ''}.${e.path}`, message: e.message });
   if (!opts.skipApprovals) {
     for (const c of compiled) {
-      const problem = approvalCovers(bundle.approvals, c);
+      const problem = approvalCovers(bundle.approvals, c, opts.requireHumanForEnforce ?? true);
       if (problem) errors.push({ path: `rules(${c.rule.id})`, message: problem });
     }
   }

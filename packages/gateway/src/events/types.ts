@@ -32,7 +32,7 @@ export interface Verdict {
 }
 
 export interface WardenEvent {
-  type: 'verdict' | 'pin' | 'approval' | 'policy' | 'session';
+  type: 'verdict' | 'pin' | 'approval' | 'policy' | 'session' | 'message';
   ts: string;
   data: unknown;
 }

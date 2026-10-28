@@ -66,6 +66,7 @@ export async function createGateway(cfg: GatewayConfig, overrides: GatewayOverri
       path: cfg.policy.bundle,
       trustedKeys: cfg.policy.trustedKeys,
       allowUnsigned: cfg.policy.allowUnsigned,
+      requireHumanApproval: cfg.policy.requireHumanApproval,
       watch: cfg.policy.watch,
     },
     bus,

@@ -34,3 +34,4 @@ dbt_packages/
 analytics/dbt/target/
 analytics/dbt/logs/
 results/**/raw/
+python/uv.lock.bak
