@@ -40,6 +40,16 @@ describe('config', () => {
       parseConfig('servers: [{ name: "Bad Name", transport: { type: http, url: "http://x" } }]'),
     ).toThrow();
   });
+  it('treats an empty ${VAR:-} placeholder (YAML null) as unset, so defaults apply', () => {
+    const c = parseConfig(
+      'admin: { token: ${T:-} }\ntelemetry:\n  otlpEndpoint: ${O:-}\nservers: [{ name: s1, transport: { type: stdio, command: node } }]',
+      process.cwd(),
+      {},
+    );
+    expect(c.admin.token).toBe('');
+    expect(c.telemetry.otlpEndpoint).toBe('');
+    expect(c.telemetry.serviceName).toBe('warden-gateway');
+  });
   it('defaults are safe: fail closed for high risk, spotlight on, untrusted servers', () => {
     const c = parseConfig('servers: [{ name: s1, transport: { type: stdio, command: node } }]');
     expect(c.failure.highRisk).toBe('closed');

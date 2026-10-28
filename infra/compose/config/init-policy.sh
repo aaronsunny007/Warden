@@ -29,6 +29,27 @@ const rules = JSON.parse(fs.readFileSync(process.argv[1], "utf8"))
 fs.writeFileSync(process.argv[2], JSON.stringify(rules, null, 2));
 ' "$RULES_SRC" "$POLICY_DIR/rules.shadow.json"
 
+# Every non-off rule needs an approval bound to its canonical hash (mode included). The lab
+# records a *shadow-stage* approval from this init job, explicitly flagged non-human. Enforcement
+# still requires a human approval (G8) and is never granted here.
+echo "[policy-init] recording shadow-stage approvals"
+node packages/policy-ir/dist/cli.js hash "$POLICY_DIR/rules.shadow.json" > "$POLICY_DIR/hashes.json"
+node -e '
+const fs = require("fs");
+const { hashes } = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+const approvals = hashes.map((h) => ({
+  ruleId: h.id,
+  version: h.version,
+  ruleHash: h.hash,
+  stage: "shadow",
+  gateReport: "0".repeat(64),
+  approvedBy: "compose-policy-init",
+  human: false,
+  approvedAt: new Date().toISOString(),
+}));
+fs.writeFileSync(process.argv[2], JSON.stringify(approvals, null, 2));
+' "$POLICY_DIR/hashes.json" "$POLICY_DIR/approvals.shadow.json"
+
 if [ ! -f "$POLICY_DIR/$KEY_ID.key.pem" ]; then
   echo "[policy-init] generating dev signing key"
   node packages/policy-ir/dist/cli.js keygen --key-id "$KEY_ID" --out-dir "$POLICY_DIR" >/dev/null
@@ -36,7 +57,8 @@ fi
 
 echo "[policy-init] assembling and signing the bundle"
 node packages/policy-ir/dist/cli.js bundle \
-  --rules "$POLICY_DIR/rules.shadow.json" --id baseline-demo --out "$POLICY_DIR/unsigned.json"
+  --rules "$POLICY_DIR/rules.shadow.json" --approvals "$POLICY_DIR/approvals.shadow.json" \
+  --id baseline-demo --out "$POLICY_DIR/unsigned.json"
 node packages/policy-ir/dist/cli.js sign \
   --bundle "$POLICY_DIR/unsigned.json" --key "$POLICY_DIR/$KEY_ID.key.pem" \
   --key-id "$KEY_ID" --out "$BUNDLE_OUT"

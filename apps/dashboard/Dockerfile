@@ -2,7 +2,9 @@
 # Build from the repo root so the pnpm workspace resolves:
 #   docker build -f apps/dashboard/Dockerfile -t warden/dashboard:dev .
 
-FROM node:22-bookworm-slim AS build
+# Base image is overridable (private mirror, or a base with a corporate proxy CA baked in).
+ARG NODE_IMAGE=node:22-bookworm-slim
+FROM ${NODE_IMAGE} AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
 RUN corepack enable
 WORKDIR /app
@@ -20,7 +22,7 @@ ENV WARDEN_STANDALONE=1 NEXT_TELEMETRY_DISABLED=1 \
     WARDEN_GATEWAY_URL=$WARDEN_GATEWAY_URL WARDEN_CONTROL_URL=$WARDEN_CONTROL_URL
 RUN pnpm --filter @warden/dashboard run build
 
-FROM node:22-bookworm-slim AS runtime
+FROM ${NODE_IMAGE} AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin warden
 WORKDIR /app

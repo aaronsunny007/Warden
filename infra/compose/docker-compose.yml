@@ -18,6 +18,8 @@ x-python-image: &python-image
   build:
     context: ../..
     dockerfile: infra/docker/python.Dockerfile
+    args:
+      PYTHON_IMAGE: ${WARDEN_PYTHON_IMAGE:-python:3.12-slim-bookworm}
   image: warden/python:dev
 
 services:
@@ -50,7 +52,7 @@ services:
   # ---- one-shots: schema migration and the signed baseline bundle ----
   db-migrate:
     <<: *python-image
-    command: ['sh', '-c', 'cd /app && alembic upgrade head']
+    command: ['sh', '-c', 'cd /app && python -m alembic upgrade head']
     environment:
       WARDEN_DATABASE_URL: postgresql+psycopg://warden:warden@postgres:5432/warden
     entrypoint: []
@@ -63,6 +65,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/node.Dockerfile
+      args:
+        NODE_IMAGE: ${WARDEN_NODE_IMAGE:-node:22-bookworm-slim}
     image: warden/node:dev
     entrypoint: ['sh', '/etc/warden/init-policy.sh']
     volumes:
@@ -76,6 +80,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/node.Dockerfile
+      args:
+        NODE_IMAGE: ${WARDEN_NODE_IMAGE:-node:22-bookworm-slim}
     command: ['packages/lab-servers/dist/cli.js', 'http', '--host', '0.0.0.0', '--port', '8790']
     environment:
       HOST: 0.0.0.0
@@ -130,6 +136,8 @@ services:
     build:
       context: ../..
       dockerfile: infra/docker/node.Dockerfile
+      args:
+        NODE_IMAGE: ${WARDEN_NODE_IMAGE:-node:22-bookworm-slim}
     command: ['packages/gateway/dist/cli.js', 'serve', '--config', '/etc/warden/warden.yaml']
     environment:
       WARDEN_ADMIN_TOKEN: ${WARDEN_ADMIN_TOKEN:-}
@@ -195,6 +203,8 @@ services:
     build:
       context: ../..
       dockerfile: apps/dashboard/Dockerfile
+      args:
+        NODE_IMAGE: ${WARDEN_NODE_IMAGE:-node:22-bookworm-slim}
     environment:
       # The dashboard proxies /admin -> gateway and /control -> control plane (next.config rewrites).
       WARDEN_GATEWAY_URL: http://gateway:8787

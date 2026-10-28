@@ -165,13 +165,28 @@ export function interpolateEnv(text: string, env: NodeJS.ProcessEnv = process.en
   );
 }
 
+/**
+ * `key: ${VAR:-}` interpolates to `key:` (YAML null). Treat a null the same as a missing key so
+ * the schema default applies, instead of failing with "expected string, received null".
+ */
+export function dropNulls(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(dropNulls);
+  if (v && typeof v === 'object')
+    return Object.fromEntries(
+      Object.entries(v as Record<string, unknown>)
+        .filter(([, x]) => x !== null)
+        .map(([k, x]) => [k, dropNulls(x)]),
+    );
+  return v;
+}
+
 export function parseConfig(
   yamlText: string,
   baseDir = process.cwd(),
   env: NodeJS.ProcessEnv = process.env,
 ): GatewayConfig {
   const raw = parseYaml(interpolateEnv(yamlText, env)) ?? {};
-  const cfg = GatewayConfig.parse(raw);
+  const cfg = GatewayConfig.parse(dropNulls(raw));
   const abs = (p: string): string => (p && !isAbsolute(p) ? resolve(baseDir, p) : p);
   cfg.policy.bundle = abs(cfg.policy.bundle);
   cfg.pins.path = abs(cfg.pins.path);

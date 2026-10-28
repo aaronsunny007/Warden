@@ -9,8 +9,12 @@
 #
 #   docker build -f infra/docker/python.Dockerfile -t warden/python:dev .
 
-FROM ghcr.io/astral-sh/uv:0.9.9-python3.12-bookworm-slim AS build
-ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
+# Base image is overridable (private mirror, or a base with a corporate proxy CA baked in).
+ARG PYTHON_IMAGE=python:3.12-slim-bookworm
+FROM ${PYTHON_IMAGE} AS build
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy PIP_DISABLE_PIP_VERSION_CHECK=1
+# uv comes from PyPI (pinned) rather than a second registry, so the build needs only Docker Hub + PyPI.
+RUN pip install --no-cache-dir 'uv==0.9.9'
 WORKDIR /app
 
 # Resolve dependencies first (cached unless the manifest changes).
@@ -24,7 +28,7 @@ COPY python/alembic.ini ./alembic.ini
 COPY python/migrations ./migrations
 RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system --no-cache --no-deps -e .
 
-FROM python:3.12-slim-bookworm AS runtime
+FROM ${PYTHON_IMAGE} AS runtime
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin warden
 WORKDIR /app

@@ -58,11 +58,4 @@ data:
       otlpEndpoint: ${WARDEN_OTLP_ENDPOINT:-}
       serviceName: warden-gateway
   init-policy.sh: |
-    #!/bin/sh
-    set -eu
-    POLICY_DIR=/policy; KEY_ID=warden-dev
-    if [ -f "$POLICY_DIR/baseline.bundle.json" ] && [ -f "$POLICY_DIR/$KEY_ID.pub.pem" ]; then exit 0; fi
-    node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8")).map(x=>({...x,mode:"shadow"}));fs.writeFileSync(process.argv[2],JSON.stringify(r))' /app/policies/baseline.rules.json "$POLICY_DIR/rules.shadow.json"
-    node packages/policy-ir/dist/cli.js keygen --key-id "$KEY_ID" --out-dir "$POLICY_DIR" >/dev/null
-    node packages/policy-ir/dist/cli.js bundle --rules "$POLICY_DIR/rules.shadow.json" --id baseline-demo --out "$POLICY_DIR/unsigned.json"
-    node packages/policy-ir/dist/cli.js sign --bundle "$POLICY_DIR/unsigned.json" --key "$POLICY_DIR/$KEY_ID.key.pem" --key-id "$KEY_ID" --out "$POLICY_DIR/baseline.bundle.json"
+{{ .Files.Get "files/init-policy.sh" | indent 4 }}

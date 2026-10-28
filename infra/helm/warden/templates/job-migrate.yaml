@@ -24,6 +24,6 @@ spec:
             - |
               echo "waiting for postgres"
               until python -c "import os; from sqlalchemy import create_engine; create_engine(os.environ['WARDEN_DATABASE_URL']).connect().close()" 2>/dev/null; do sleep 2; done
-              cd /app && alembic upgrade head
+              cd /app && python -m alembic upgrade head
           env:
             - { name: WARDEN_DATABASE_URL, value: {{ include "warden.pyDatabaseUrl" . | quote }} }
