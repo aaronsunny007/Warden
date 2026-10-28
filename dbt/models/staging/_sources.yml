@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: warden
+    description: Tables written by the Warden gateway, control plane and learning loop.
+    schema: public
+    tables:
+      - name: verdicts
+        description: Every gateway verdict (one row per inspected MCP message).
+      - name: campaigns
+        description: Red-team attempts and whether each was a confirmed bypass.
+      - name: candidates
+        description: Proposed defences and their position in the validation gate.
+      - name: gate_reports
+        description: The full 8-stage report for each gated candidate.
+      - name: defences
+        description: Promoted defences (defence memory).

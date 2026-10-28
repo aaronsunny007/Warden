@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: verdicts_by_decision
+    description: Verdict volume, taint share and latency percentiles by server/channel/decision.
+    columns:
+      - name: decision
+        tests: [not_null]
+  - name: owasp_coverage
+    description: How often each OWASP ASI/MCP category is cited, and how often it is enforced/flagged.
+    columns:
+      - name: owasp_code
+        tests: [not_null, unique]
+  - name: detection_layer_mix
+    description: Verdicts and mean score by cascade layer (L0–L3) and decision.
+    columns:
+      - name: layer
+        tests: [not_null]
+  - name: asr_by_round
+    description: Attack success rate per learning-loop round (RQ3).
+    columns:
+      - name: asr
+        tests: [not_null]
+  - name: gate_funnel
+    description: Distribution of proposed defences across validation-gate status/stage/author.
