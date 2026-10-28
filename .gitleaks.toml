@@ -1,27 +1,23 @@
-# Gitleaks configuration. Extends the default ruleset; nothing is disabled globally.
+# Gitleaks configuration. Extends the default ruleset; no rule is disabled.
 #
-# Warden is a security project that ships deliberately fake secrets: canary tokens in the
-# synthetic lab data, and test vectors for its own secret detector. Each allowlisted value
-# below is one of those fixtures, matched by exact value AND restricted to the files that hold it.
-# Anything else, anywhere else, is still reported.
+# Warden ships fake secrets on purpose: a canary token in the synthetic lab data, AWS's
+# documented example key id, a base64 "hello world", and Slack/JWT test vectors for Warden's own
+# secret detector. Each pattern below is the EXACT fake value, so a real credential anywhere is
+# still reported, and the allowlist keeps working if history is squashed or rewritten.
+#
+# The singular [allowlist] table is used deliberately: gitleaks-action bundles an older gitleaks
+# that ignores the newer [[allowlists]] syntax.
 title = "warden gitleaks config"
 
 [extend]
 useDefault = true
 
-[[allowlists]]
-description = "Synthetic lab data and detector test vectors (exact fake values, fixture files only)"
-condition = "AND"
-paths = [
-  '''^data/lab/world\.json$''',
-  '''^data/corpus/.*\.jsonl$''',
-  '''^python/scripts/build_corpus\.py$''',
-  '''^packages/[a-z-]+/(test|src)/.*\.ts$''',
-]
+[allowlist]
+description = "Deliberate fake fixtures (exact values only)"
 regexes = [
-  '''WARDEN-CANARY-[A-Z0-9]{12}''',                       # lab canary token (never a real credential)
-  '''AKIAIOSFODNN7EXAMPLE''',                             # AWS's documented example key id
-  '''aGVsbG8gd29ybGQ=''',                                 # base64 of "hello world"
-  '''xoxb-1234567890-abcdefghij''',                        # fake Slack token test vector
-  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0\.[A-Za-z0-9_-]+''',  # fake JWT test vector
+  '''WARDEN-CANARY-[A-Z0-9]{12}''',
+  '''AKIAIOSFODNN7EXAMPLE''',
+  '''aGVsbG8gd29ybGQ=''',
+  '''xoxb-1234567890-abcdefghij''',
+  '''eyJhbGciOiJIUzI1NiJ9\.eyJzdWIiOiIxMjM0NTY3ODkwIn0\.[A-Za-z0-9_-]+''',
 ]
