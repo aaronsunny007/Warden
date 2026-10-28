@@ -145,7 +145,9 @@ def main() -> int:
     out_dir = Path(a.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     model.cpu().eval()
-    dummy = tok(["export sample"], truncation=True, max_length=a.max_len, padding="max_length", return_tensors="pt")
+    dummy = tok(
+        ["export sample"], truncation=True, max_length=a.max_len, padding="max_length", return_tensors="pt"
+    )
     torch.onnx.export(
         model,
         (dummy["input_ids"], dummy["attention_mask"]),
