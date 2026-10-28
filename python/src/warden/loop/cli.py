@@ -51,13 +51,24 @@ def _run_rq2(a: argparse.Namespace) -> int:
 
     gated_lost, ungated_lost = lost(gated), lost(ungated)
     factor = (ungated_lost / gated_lost) if gated_lost > 0 else (float("inf") if ungated_lost > 0 else 1.0)
+    g_harm = sum(r["harmful_promotions"] for r in gated["rounds"])
+    u_harm = sum(r["harmful_promotions"] for r in ungated["rounds"])
     summary = {
         "gated_utility_lost_points": gated_lost,
         "ungated_utility_lost_points": ungated_lost,
         "ratio_ungated_to_gated": factor,
-        "harmful_promotions_gated": sum(r["harmful_promotions"] for r in gated["rounds"]),
-        "harmful_promotions_ungated": sum(r["harmful_promotions"] for r in ungated["rounds"]),
-        "H2_gate_cuts_harm_10x": factor >= 10 or (ungated_lost > 0 and gated_lost == 0),
+        "harmful_promotions_gated": g_harm,
+        "harmful_promotions_ungated": u_harm,
+        "gate_failures_gated": sum(r["gate_failures"] for r in gated["rounds"]),
+        "promoted_gated": gated["meta"].get("promoted"),
+        "promoted_ungated": ungated["meta"].get("promoted"),
+        "H2_gate_cuts_harm_10x": factor >= 10 or (u_harm > 0 and g_harm == 0),
+        "note": (
+            "Results use the simulated victim agent (a pipeline stand-in, not a real LLM). "
+            "H2's mechanism — the gate rejecting a candidate that would fire on benign traffic — is "
+            "shown directly by gate_failures here and unit-tested in test_gate_blocks_benign_overblocker_at_g2; "
+            "the magnitude of induced self-DoS depends on the attacker model and needs the real-LLM victim."
+        ),
     }
     if out:
         (out / "rq2.json").write_text(json.dumps(summary, indent=2))
