@@ -6,7 +6,7 @@
 #   docker build -f infra/docker/node.Dockerfile -t warden/node:dev .
 
 # ---- build: install everything and compile the TypeScript packages ----
-FROM node:22-bookworm-slim AS build
+FROM node:25-bookworm-slim AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
 RUN corepack enable
 WORKDIR /app
@@ -25,7 +25,7 @@ COPY data ./data
 RUN pnpm -r --filter "./packages/**" run build
 
 # ---- prune: a second, production-only dependency tree ----
-FROM node:22-bookworm-slim AS prune
+FROM node:25-bookworm-slim AS prune
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH
 RUN corepack enable
 WORKDIR /app
@@ -34,7 +34,7 @@ RUN pnpm install --frozen-lockfile --prod --filter "./packages/**..." \
     && pnpm store prune || true
 
 # ---- runtime ----
-FROM node:22-bookworm-slim AS runtime
+FROM node:25-bookworm-slim AS runtime
 ENV NODE_ENV=production
 # Unprivileged user; a fixed uid keeps mounted-volume permissions predictable.
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin warden
