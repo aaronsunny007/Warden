@@ -9,7 +9,7 @@
 #
 #   docker build -f infra/docker/python.Dockerfile -t warden/python:dev .
 
-FROM ghcr.io/astral-sh/uv:0.9.9-python3.12-bookworm-slim AS build
+FROM ghcr.io/astral-sh/uv:0.9.30-python3.12-bookworm-slim AS build
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app
 
