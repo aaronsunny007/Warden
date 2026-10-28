@@ -97,6 +97,9 @@ class Stack(AbstractContextManager["Stack"]):
     server_configs: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
     workdir: Path = field(default_factory=lambda: Path(tempfile.mkdtemp(prefix="warden-eval-")))
     procs: dict[str, Proc] = field(default_factory=dict)
+    key: Path = field(default_factory=Path)
+    pub: Path = field(default_factory=Path)
+    key_id: str = "eval"
 
     def _spawn(
         self, name: str, cmd: list[str], url: str, health: str, env: dict[str, str] | None = None
@@ -213,6 +216,7 @@ class Stack(AbstractContextManager["Stack"]):
         )
         key_id = "eval"
         key, pub = policy_cli.keygen(self.workdir / "keys", key_id)
+        self.key, self.pub, self.key_id = key, pub, key_id
         detectors: dict[str, str] = {}
         bases = {g.split("-")[0] for g in self.baselines}
         for mode, needed in (("full", bool(bases & {"B3", "B4", "B5"})), ("l2only", "B2" in bases)):
@@ -256,6 +260,16 @@ class Stack(AbstractContextManager["Stack"]):
     def __exit__(self, *exc: object) -> None:
         for p in reversed(list(self.procs.values())):
             p.stop()
+
+    def put_policy(self, gid: str, bundle: dict[str, Any]) -> dict[str, Any]:
+        url = self.gateway_url(gid)
+        if not url:
+            raise KeyError(gid)
+        r = httpx.put(f"{url}/api/v1/policy", json=bundle, headers={"authorization": "Bearer eval"}, timeout=30)
+        if r.status_code != 200:
+            raise RuntimeError(f"gateway {gid} rejected bundle: {r.text[:2000]}")
+        out: dict[str, Any] = r.json()
+        return out
 
     def admin(self, baseline: str, path: str) -> Any:
         url = self.gateway_url(baseline)

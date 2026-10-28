@@ -78,6 +78,13 @@ def cmd_agentdojo(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_control(a: argparse.Namespace) -> int:
+    import uvicorn
+
+    uvicorn.run("warden.control.service:create_app", factory=True, host=a.host, port=a.port, log_level="info")
+    return 0
+
+
 def cmd_corpus(a: argparse.Namespace) -> int:
     from warden.corpus import verify_lock
 
@@ -136,6 +143,11 @@ def build_parser() -> argparse.ArgumentParser:
     ad.add_argument("--out")
     ad.add_argument("--ollama-url", default="http://127.0.0.1:11434")
     ad.set_defaults(fn=cmd_agentdojo)
+
+    ctl = sub.add_parser("control").add_subparsers(dest="sub", required=True).add_parser("serve")
+    ctl.add_argument("--host", default="127.0.0.1")
+    ctl.add_argument("--port", type=int, default=8008)
+    ctl.set_defaults(fn=cmd_control)
 
     c = sub.add_parser("corpus").add_subparsers(dest="sub", required=True).add_parser("verify-lock")
     c.set_defaults(fn=cmd_corpus)
