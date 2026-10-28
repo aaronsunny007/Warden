@@ -4,10 +4,28 @@ import type { CSSProperties, ReactNode } from 'react';
 export function Panel({ title, children, right }: { title: string; children: ReactNode; right?: ReactNode }) {
   return (
     <section
-      style={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 10, padding: 16, marginBottom: 16 }}
+      style={{
+        background: 'var(--panel)',
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+        padding: 16,
+        marginBottom: 16,
+      }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 style={{ fontSize: 14, margin: 0, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 0.6 }}>{title}</h2>
+      <div
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
+      >
+        <h2
+          style={{
+            fontSize: 14,
+            margin: 0,
+            color: 'var(--muted)',
+            textTransform: 'uppercase',
+            letterSpacing: 0.6,
+          }}
+        >
+          {title}
+        </h2>
         {right}
       </div>
       {children}

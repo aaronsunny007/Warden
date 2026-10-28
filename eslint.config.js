@@ -2,7 +2,17 @@ import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/.next/**', '**/node_modules/**', 'python/**', '**/coverage/**', '**/*.cjs', 'apps/dashboard/next-env.d.ts'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/.next/**',
+      '**/node_modules/**',
+      'python/**',
+      '**/coverage/**',
+      '**/*.cjs',
+      'apps/dashboard/next-env.d.ts',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

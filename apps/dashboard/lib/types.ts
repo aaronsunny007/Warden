@@ -65,7 +65,14 @@ export interface ApprovalRow {
 
 export interface Status {
   version: string;
-  servers: Array<{ name: string; connected: boolean; tools: number; trust: string; transport: string; lastError: string }>;
+  servers: Array<{
+    name: string;
+    connected: boolean;
+    tools: number;
+    trust: string;
+    transport: string;
+    lastError: string;
+  }>;
   bundle: { id: string; rules: number; loadedAt: string; errors: unknown[] };
   tools: Record<string, number>;
   detector: string | null;

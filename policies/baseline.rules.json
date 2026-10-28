@@ -10,18 +10,13 @@
       "message": "tool description hides characters"
     },
     "scope": {
-      "channels": [
-        "description"
-      ]
+      "channels": ["description"]
     },
     "match": {
       "kind": "hiddenUnicode",
       "field": "text"
     },
-    "owasp": [
-      "MCP03",
-      "ASI04"
-    ],
+    "owasp": ["MCP03", "ASI04"],
     "provenance": {
       "author": "human",
       "note": "Invariant Labs tool-poisoning write-ups; ASCII smuggling via Unicode tags"
@@ -38,9 +33,7 @@
       "message": "tool description contains instructions to the model"
     },
     "scope": {
-      "channels": [
-        "description"
-      ]
+      "channels": ["description"]
     },
     "match": {
       "any": [
@@ -82,11 +75,7 @@
         }
       ]
     },
-    "owasp": [
-      "MCP03",
-      "ASI01",
-      "ASI04"
-    ],
+    "owasp": ["MCP03", "ASI01", "ASI04"],
     "provenance": {
       "author": "human",
       "note": "Patterns rebuilt from public MCP tool-poisoning PoCs (WhatsApp MCP, Invariant Labs)"
@@ -103,18 +92,13 @@
       "message": "tool description refers to other tools"
     },
     "scope": {
-      "channels": [
-        "description"
-      ]
+      "channels": ["description"]
     },
     "match": {
       "kind": "toolRef",
       "field": "description"
     },
-    "owasp": [
-      "MCP03",
-      "MCP09"
-    ],
+    "owasp": ["MCP03", "MCP09"],
     "provenance": {
       "author": "human"
     }
@@ -130,9 +114,7 @@
       "message": "tool description references sensitive files"
     },
     "scope": {
-      "channels": [
-        "description"
-      ]
+      "channels": ["description"]
     },
     "match": {
       "kind": "text",
@@ -150,10 +132,7 @@
         ".env file"
       ]
     },
-    "owasp": [
-      "MCP03",
-      "MCP01"
-    ],
+    "owasp": ["MCP03", "MCP01"],
     "provenance": {
       "author": "human"
     }
@@ -169,18 +148,14 @@
       "message": "detector flagged the tool description"
     },
     "scope": {
-      "channels": [
-        "description"
-      ]
+      "channels": ["description"]
     },
     "match": {
       "kind": "detector",
       "layer": "max",
       "gte": 0.85
     },
-    "owasp": [
-      "MCP03"
-    ],
+    "owasp": ["MCP03"],
     "provenance": {
       "author": "human"
     }
@@ -196,19 +171,14 @@
       "message": "the address is internal (possible SSRF)"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ]
+      "channels": ["arguments"]
     },
     "match": {
       "kind": "url",
       "field": "args.**",
       "privateAddress": true
     },
-    "owasp": [
-      "ASI02",
-      "MCP05"
-    ],
+    "owasp": ["ASI02", "MCP05"],
     "provenance": {
       "author": "human"
     }
@@ -224,23 +194,14 @@
       "message": "the URL scheme is not allowed"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ]
+      "channels": ["arguments"]
     },
     "match": {
       "kind": "url",
       "field": "args.**",
-      "schemeNotIn": [
-        "http",
-        "https",
-        "mailto"
-      ]
+      "schemeNotIn": ["http", "https", "mailto"]
     },
-    "owasp": [
-      "ASI02",
-      "MCP05"
-    ],
+    "owasp": ["ASI02", "MCP05"],
     "provenance": {
       "author": "human"
     }
@@ -256,23 +217,14 @@
       "message": "the call would send a secret or credential"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ],
-      "riskTiers": [
-        "external_send",
-        "financial_destructive"
-      ]
+      "channels": ["arguments"],
+      "riskTiers": ["external_send", "financial_destructive"]
     },
     "match": {
       "kind": "secret",
       "field": "args.**"
     },
-    "owasp": [
-      "MCP01",
-      "ASI02",
-      "MCP10"
-    ],
+    "owasp": ["MCP01", "ASI02", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -288,23 +240,16 @@
       "message": "the content embeds an external image URL carrying data"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ]
+      "channels": ["arguments"]
     },
     "match": {
       "kind": "url",
       "field": "args.**",
       "markdownImage": true,
-      "hostNotIn": [
-        "*.acme.example"
-      ],
+      "hostNotIn": ["*.acme.example"],
       "queryLengthGt": 0
     },
-    "owasp": [
-      "ASI01",
-      "MCP10"
-    ],
+    "owasp": ["ASI01", "MCP10"],
     "provenance": {
       "author": "human",
       "note": "EchoLeak CVE-2025-32711"
@@ -321,28 +266,17 @@
       "message": "the URL carries data to an outside host after untrusted content was read"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ],
+      "channels": ["arguments"],
       "taint": "tainted",
-      "riskTiers": [
-        "external_send",
-        "financial_destructive"
-      ]
+      "riskTiers": ["external_send", "financial_destructive"]
     },
     "match": {
       "kind": "url",
       "field": "args.**",
-      "hostNotIn": [
-        "*.acme.example"
-      ],
+      "hostNotIn": ["*.acme.example"],
       "queryLengthGt": 48
     },
-    "owasp": [
-      "ASI01",
-      "MCP06",
-      "MCP10"
-    ],
+    "owasp": ["ASI01", "MCP06", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -358,14 +292,9 @@
       "message": "the destination did not come from the user's request"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ],
+      "channels": ["arguments"],
       "taint": "tainted",
-      "riskTiers": [
-        "external_send",
-        "financial_destructive"
-      ]
+      "riskTiers": ["external_send", "financial_destructive"]
     },
     "match": {
       "any": [
@@ -419,11 +348,7 @@
         }
       ]
     },
-    "owasp": [
-      "ASI01",
-      "ASI02",
-      "MCP06"
-    ],
+    "owasp": ["ASI01", "ASI02", "MCP06"],
     "provenance": {
       "author": "human",
       "note": "Lightweight approximation of CaMeL data-flow control"
@@ -440,13 +365,9 @@
       "message": "the amount did not come from the user's request"
     },
     "scope": {
-      "channels": [
-        "arguments"
-      ],
+      "channels": ["arguments"],
       "taint": "tainted",
-      "riskTiers": [
-        "financial_destructive"
-      ]
+      "riskTiers": ["financial_destructive"]
     },
     "match": {
       "any": [
@@ -460,10 +381,7 @@
         }
       ]
     },
-    "owasp": [
-      "ASI02",
-      "ASI09"
-    ],
+    "owasp": ["ASI02", "ASI09"],
     "provenance": {
       "author": "human"
     }
@@ -479,9 +397,7 @@
       "message": "injected instruction removed from tool output"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "any": [
@@ -528,11 +444,7 @@
         }
       ]
     },
-    "owasp": [
-      "ASI01",
-      "MCP10",
-      "ASI06"
-    ],
+    "owasp": ["ASI01", "MCP10", "ASI06"],
     "provenance": {
       "author": "human",
       "note": "Seed phrases from AgentDojo injection templates and deepset/prompt-injections"
@@ -549,9 +461,7 @@
       "message": "fake role or boundary tag removed"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "kind": "text",
@@ -571,10 +481,7 @@
       ],
       "normalize": false
     },
-    "owasp": [
-      "ASI01",
-      "MCP10"
-    ],
+    "owasp": ["ASI01", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -590,18 +497,13 @@
       "message": "hidden characters stripped"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "kind": "hiddenUnicode",
       "field": "text"
     },
-    "owasp": [
-      "ASI01",
-      "MCP10"
-    ],
+    "owasp": ["ASI01", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -617,9 +519,7 @@
       "message": "secret redacted"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "kind": "secret",
@@ -638,10 +538,7 @@
         "canary_token"
       ]
     },
-    "owasp": [
-      "MCP01",
-      "MCP10"
-    ],
+    "owasp": ["MCP01", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -657,17 +554,12 @@
       "message": "encoded instruction in tool output"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "kind": "decoded",
       "field": "text",
-      "encodings": [
-        "base64",
-        "hex"
-      ],
+      "encodings": ["base64", "hex"],
       "anyOf": [
         "ignore previous instructions",
         "ignore all previous",
@@ -678,10 +570,7 @@
         "new instructions"
       ]
     },
-    "owasp": [
-      "ASI01",
-      "MCP10"
-    ],
+    "owasp": ["ASI01", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -697,19 +586,14 @@
       "message": "detector flagged the output as an injection"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "kind": "detector",
       "layer": "max",
       "gte": 0.92
     },
-    "owasp": [
-      "ASI01",
-      "MCP10"
-    ],
+    "owasp": ["ASI01", "MCP10"],
     "provenance": {
       "author": "human"
     }
@@ -724,19 +608,14 @@
       "type": "taint_session"
     },
     "scope": {
-      "channels": [
-        "output"
-      ]
+      "channels": ["output"]
     },
     "match": {
       "kind": "detector",
       "layer": "max",
       "gte": 0.5
     },
-    "owasp": [
-      "ASI01",
-      "ASI06"
-    ],
+    "owasp": ["ASI01", "ASI06"],
     "provenance": {
       "author": "human"
     }

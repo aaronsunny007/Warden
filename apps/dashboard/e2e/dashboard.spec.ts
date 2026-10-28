@@ -31,5 +31,7 @@ test('renders overview, feed, tools, pending approval and OWASP coverage', async
 
 test('streams a live verdict over SSE', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('verdict-row').filter({ hasText: 'read_email' }).first()).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('verdict-row').filter({ hasText: 'read_email' }).first()).toBeVisible({
+    timeout: 10_000,
+  });
 });

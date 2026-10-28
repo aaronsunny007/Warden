@@ -11,7 +11,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <header
-          style={{ borderBottom: '1px solid var(--border)', padding: '14px 24px', display: 'flex', gap: 16, alignItems: 'baseline' }}
+          style={{
+            borderBottom: '1px solid var(--border)',
+            padding: '14px 24px',
+            display: 'flex',
+            gap: 16,
+            alignItems: 'baseline',
+          }}
         >
           <strong style={{ fontSize: 18 }}>Warden</strong>
           <span style={{ color: 'var(--muted)', fontSize: 13 }}>

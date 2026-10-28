@@ -7,7 +7,7 @@ description: >-
   use only; all data is synthetic.
 type: application
 version: 0.1.0
-appVersion: "0.1.0"
+appVersion: '0.1.0'
 keywords: [mcp, ai-security, prompt-injection, owasp, agentic]
 home: https://github.com/aaronsunny007/Warden
 sources:

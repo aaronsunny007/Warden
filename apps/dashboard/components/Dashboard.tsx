@@ -17,7 +17,13 @@ export function Dashboard() {
 
   const refresh = useCallback(async () => {
     try {
-      const [s, t, v, c, a] = await Promise.all([api.status(), api.tools(), api.verdicts(300), api.coverage(), api.approvals()]);
+      const [s, t, v, c, a] = await Promise.all([
+        api.status(),
+        api.tools(),
+        api.verdicts(300),
+        api.coverage(),
+        api.approvals(),
+      ]);
       setStatus(s);
       setTools(t);
       setVerdicts(v);
@@ -61,7 +67,17 @@ export function Dashboard() {
   return (
     <div data-testid="dashboard">
       {error && (
-        <div style={{ background: '#2d1012', border: '1px solid var(--block)', borderRadius: 8, padding: 10, marginBottom: 16, color: 'var(--block)' }} data-testid="conn-error">
+        <div
+          style={{
+            background: '#2d1012',
+            border: '1px solid var(--block)',
+            borderRadius: 8,
+            padding: 10,
+            marginBottom: 16,
+            color: 'var(--block)',
+          }}
+          data-testid="conn-error"
+        >
           Cannot reach Warden: {error}. Showing last known data.
         </div>
       )}
@@ -94,12 +110,24 @@ export function Dashboard() {
                 .filter((a) => a.state === 'pending')
                 .map((a) => (
                   <tr key={a.id} style={{ borderTop: '1px solid var(--border)' }} data-testid="approval-row">
-                    <td style={{ padding: '8px 6px' }}><code>{a.qualifiedTool}</code></td>
+                    <td style={{ padding: '8px 6px' }}>
+                      <code>{a.qualifiedTool}</code>
+                    </td>
                     <td style={{ padding: '8px 6px', color: 'var(--muted)' }}>{a.reason}</td>
                     <td style={{ padding: '8px 6px' }}>{a.ruleIds.join(', ')}</td>
                     <td style={{ padding: '8px 6px', textAlign: 'right' }}>
-                      <button onClick={() => void decideApproval(a.id, 'approve').then(refresh)} style={btn('var(--allow)')}>Approve</button>
-                      <button onClick={() => void decideApproval(a.id, 'deny').then(refresh)} style={btn('var(--block)')}>Deny</button>
+                      <button
+                        onClick={() => void decideApproval(a.id, 'approve').then(refresh)}
+                        style={btn('var(--allow)')}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => void decideApproval(a.id, 'deny').then(refresh)}
+                        style={btn('var(--block)')}
+                      >
+                        Deny
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -113,21 +141,50 @@ export function Dashboard() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ textAlign: 'left', color: 'var(--muted)' }}>
-                <th style={th}>Time</th><th style={th}>Decision</th><th style={th}>Channel</th><th style={th}>Tool</th>
-                <th style={th}>Layer</th><th style={th}>Rules</th><th style={th}>OWASP</th><th style={th}>Explanation</th>
+                <th style={th}>Time</th>
+                <th style={th}>Decision</th>
+                <th style={th}>Channel</th>
+                <th style={th}>Tool</th>
+                <th style={th}>Layer</th>
+                <th style={th}>Rules</th>
+                <th style={th}>OWASP</th>
+                <th style={th}>Explanation</th>
               </tr>
             </thead>
             <tbody>
               {verdicts.map((v) => (
                 <tr key={v.id} style={{ borderTop: '1px solid var(--border)' }} data-testid="verdict-row">
                   <td style={td}>{new Date(v.ts).toLocaleTimeString()}</td>
-                  <td style={td}><Badge kind={v.decision}>{v.decision}</Badge></td>
-                  <td style={td}>{v.channel}{v.tainted ? ' 🔶' : ''}</td>
-                  <td style={td}><code>{v.server}.{v.tool}</code></td>
-                  <td style={td}>{v.layer}{v.score != null ? ` ${v.score.toFixed(2)}` : ''}</td>
+                  <td style={td}>
+                    <Badge kind={v.decision}>{v.decision}</Badge>
+                  </td>
+                  <td style={td}>
+                    {v.channel}
+                    {v.tainted ? ' 🔶' : ''}
+                  </td>
+                  <td style={td}>
+                    <code>
+                      {v.server}.{v.tool}
+                    </code>
+                  </td>
+                  <td style={td}>
+                    {v.layer}
+                    {v.score != null ? ` ${v.score.toFixed(2)}` : ''}
+                  </td>
                   <td style={td}>{v.ruleIds.join(', ')}</td>
                   <td style={td}>{v.owasp.join(', ')}</td>
-                  <td style={{ ...td, color: 'var(--muted)', maxWidth: 360, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.explanation}</td>
+                  <td
+                    style={{
+                      ...td,
+                      color: 'var(--muted)',
+                      maxWidth: 360,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {v.explanation}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -139,16 +196,33 @@ export function Dashboard() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ textAlign: 'left', color: 'var(--muted)' }}>
-              <th style={th}>Tool</th><th style={th}>Risk</th><th style={th}>Status</th><th style={th}>Reason / findings</th>
+              <th style={th}>Tool</th>
+              <th style={th}>Risk</th>
+              <th style={th}>Status</th>
+              <th style={th}>Reason / findings</th>
             </tr>
           </thead>
           <tbody>
             {tools.map((t) => (
               <tr key={t.name} style={{ borderTop: '1px solid var(--border)' }} data-testid="tool-row">
-                <td style={td}><code>{t.name}</code></td>
-                <td style={td}>{t.riskTier}{t.taintsSession ? ' · taints' : ''}</td>
-                <td style={td}><Badge kind={t.status === 'approved' ? 'allow' : t.status === 'quarantined' ? 'block' : 'redact'}>{t.status}</Badge></td>
-                <td style={{ ...td, color: 'var(--muted)' }}>{t.reason}{t.findings.length ? ` — ${t.findings.join('; ')}` : ''}</td>
+                <td style={td}>
+                  <code>{t.name}</code>
+                </td>
+                <td style={td}>
+                  {t.riskTier}
+                  {t.taintsSession ? ' · taints' : ''}
+                </td>
+                <td style={td}>
+                  <Badge
+                    kind={t.status === 'approved' ? 'allow' : t.status === 'quarantined' ? 'block' : 'redact'}
+                  >
+                    {t.status}
+                  </Badge>
+                </td>
+                <td style={{ ...td, color: 'var(--muted)' }}>
+                  {t.reason}
+                  {t.findings.length ? ` — ${t.findings.join('; ')}` : ''}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -156,11 +230,22 @@ export function Dashboard() {
       </Panel>
 
       <Panel title="OWASP coverage">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10 }}>
+        <div
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10 }}
+        >
           {(coverage?.items ?? []).map((i) => {
             const covered = i.controls.length > 0 || i.rules.length > 0;
             return (
-              <div key={i.id} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 10, opacity: covered ? 1 : 0.5 }} data-testid="owasp-item">
+              <div
+                key={i.id}
+                style={{
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  padding: 10,
+                  opacity: covered ? 1 : 0.5,
+                }}
+                data-testid="owasp-item"
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <strong style={{ fontSize: 13 }}>{i.id}</strong>
                   <Badge kind={covered ? 'allow' : undefined}>{covered ? 'covered' : 'none'}</Badge>
@@ -168,7 +253,11 @@ export function Dashboard() {
                 <div style={{ fontSize: 12, margin: '4px 0', color: 'var(--muted)' }}>{i.name}</div>
                 <div style={{ fontSize: 11 }}>
                   {i.controls.length > 0 && <div>controls: {i.controls.join(', ')}</div>}
-                  {i.rules.length > 0 && <div>rules: {i.rules.length} ({i.enforcedRules} enforcing)</div>}
+                  {i.rules.length > 0 && (
+                    <div>
+                      rules: {i.rules.length} ({i.enforcedRules} enforcing)
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -179,6 +268,21 @@ export function Dashboard() {
   );
 }
 
-const th = { padding: '6px 6px', fontWeight: 500 as const, position: 'sticky' as const, top: 0, background: 'var(--panel)' };
+const th = {
+  padding: '6px 6px',
+  fontWeight: 500 as const,
+  position: 'sticky' as const,
+  top: 0,
+  background: 'var(--panel)',
+};
 const td = { padding: '6px 6px', verticalAlign: 'top' as const };
-const btn = (color: string) => ({ marginLeft: 6, padding: '4px 10px', fontSize: 12, borderRadius: 6, border: `1px solid ${color}`, background: 'transparent', color, cursor: 'pointer' });
+const btn = (color: string) => ({
+  marginLeft: 6,
+  padding: '4px 10px',
+  fontSize: 12,
+  borderRadius: 6,
+  border: `1px solid ${color}`,
+  background: 'transparent',
+  color,
+  cursor: 'pointer',
+});

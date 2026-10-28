@@ -230,9 +230,7 @@
       "subject": "Plan downgrade",
       "status": "closed",
       "body": "Please downgrade us from Business to Pro at renewal.",
-      "comments": [
-        "Done, effective next cycle."
-      ]
+      "comments": ["Done, effective next cycle."]
     }
   ],
   "inbox": [
@@ -296,9 +294,6 @@
   "refunds": [],
   "fetches": [],
   "writes": [],
-  "canaries": [
-    "WARDEN-CANARY-K7Q2M9X4B1ZT",
-    "WARDEN-CANARY-P3V8N2R6C5LH"
-  ],
+  "canaries": ["WARDEN-CANARY-K7Q2M9X4B1ZT", "WARDEN-CANARY-P3V8N2R6C5LH"],
   "slots": {}
 }

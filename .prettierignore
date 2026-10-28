@@ -5,4 +5,5 @@ pnpm-lock.yaml
 python
 coverage
 deploy/helm/**/templates
+infra/helm/**/templates
 *.md
