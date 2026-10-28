@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars and edit.
+region               = "eu-west-2"
+alert_email          = "you@example.com"  # required for budget/billing notifications
+budget_limit_usd     = 1
+create_ecr           = true
+create_billing_alarm = true
