@@ -1,0 +1,31 @@
+{
+  "name": "@warden/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Warden dashboard: live attack feed, tool inventory, OWASP coverage, gate reports",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "next": "16.4.3",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "tailwindcss": "^4.3.3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "postcss": "^8.5.6",
+    "typescript": "~5.9.3"
+  }
+}

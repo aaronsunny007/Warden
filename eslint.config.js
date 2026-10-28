@@ -16,4 +16,10 @@ export default tseslint.config(
     files: ['**/*.test.ts', '**/scripts/**', '**/cli.ts', '**/bin/**'],
     rules: { 'no-console': 'off' },
   },
+  {
+    // Node ESM helper scripts (e.g. the dashboard's Playwright stub server) run under Node, not the browser.
+    files: ['apps/dashboard/e2e/**/*.mjs'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+    rules: { 'no-console': 'off' },
+  },
 );
