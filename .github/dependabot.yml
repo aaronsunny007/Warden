@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pip
+    directory: '/python'
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+    groups:
+      pip-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: maven
+    directory: '/services/acme-backend'
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule: { interval: weekly }
+
+  - package-ecosystem: docker
+    directories:
+      - '/infra/docker'
+      - '/apps/dashboard'
+      - '/services/acme-backend'
+    schedule: { interval: weekly }
+
+  - package-ecosystem: terraform
+    directory: '/infra/terraform'
+    schedule: { interval: weekly }

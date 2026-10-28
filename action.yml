@@ -1,0 +1,54 @@
+name: 'Warden Policy Check'
+description: >-
+  Compile and statically check a Warden policy ruleset (the G1 trusted-compiler checks: bad
+  regexes, unsafe patterns, malformed matchers), and optionally verify a signed policy bundle
+  against a trusted public key. Drop it into any repo's CI to keep your MCP security policy honest.
+author: 'Sunny Aaron'
+branding:
+  icon: shield
+  color: blue
+
+inputs:
+  rules:
+    description: 'Path (in your repo) to a rule, rule array or bundle to lint.'
+    required: false
+    default: 'policies/baseline.rules.json'
+  bundle:
+    description: 'Optional path to a signed bundle to verify.'
+    required: false
+    default: ''
+  pubkey:
+    description: 'Optional path to the Ed25519 public-key PEM the bundle must verify against.'
+    required: false
+    default: ''
+  key-id:
+    description: "Optional key id for verification (defaults to the bundle's own signature keyId)."
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Build the Warden policy CLI
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        corepack enable
+        corepack prepare pnpm@10.28.0 --activate
+        pnpm install --frozen-lockfile --filter "@warden/policy-ir..."
+        pnpm --filter @warden/policy-ir run build
+    - name: Lint the ruleset (G1 static checks)
+      shell: bash
+      run: |
+        node "${{ github.action_path }}/packages/policy-ir/dist/cli.js" lint "${{ github.workspace }}/${{ inputs.rules }}"
+    - name: Verify the signed bundle
+      if: inputs.bundle != '' && inputs.pubkey != ''
+      shell: bash
+      run: |
+        args=(verify --bundle "${{ github.workspace }}/${{ inputs.bundle }}" --pub "${{ github.workspace }}/${{ inputs.pubkey }}")
+        if [ -n "${{ inputs.key-id }}" ]; then args+=(--key-id "${{ inputs.key-id }}"); fi
+        node "${{ github.action_path }}/packages/policy-ir/dist/cli.js" "${args[@]}"

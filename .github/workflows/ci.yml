@@ -1,0 +1,145 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10.28.0'
+
+jobs:
+  node:
+    name: node — lint, typecheck, build, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
+      - run: pnpm run format:check
+      - run: pnpm -r run typecheck
+      - run: pnpm run build
+      - run: pnpm run test
+
+  dashboard-e2e:
+    name: dashboard — Playwright e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: pnpm --filter @warden/dashboard exec playwright install --with-deps chromium
+      - name: Run e2e
+        run: pnpm --filter @warden/dashboard exec playwright test
+
+  python:
+    name: python — ruff, mypy, unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install (base + dev)
+        run: uv sync --group dev
+      - name: Lint (ruff)
+        run: uv run ruff check .
+      - name: Format (ruff)
+        run: uv run ruff format --check .
+      - name: Type-check (mypy)
+        run: uv run mypy
+      - name: Corpus lock intact
+        run: uv run warden corpus verify-lock
+      - name: Unit tests (non-integration)
+        run: uv run pytest -m "not integration" -q
+
+  python-integration:
+    name: python — integration (node + postgres/pgvector)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: warden
+          POSTGRES_PASSWORD: warden
+          POSTGRES_DB: warden
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U warden -d warden"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      WARDEN_TEST_DATABASE_URL: postgresql+psycopg://warden:warden@localhost:5432/warden
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Build the Node packages (the integration tests shell out to the CLIs)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install (base + dev)
+        working-directory: python
+        run: uv sync --group dev
+      - name: Migrate the test database
+        working-directory: python
+        env:
+          WARDEN_DATABASE_URL: ${{ env.WARDEN_TEST_DATABASE_URL }}
+        run: uv run alembic upgrade head
+      - name: Integration tests
+        working-directory: python
+        run: uv run pytest -m integration -q
+
+  java:
+    name: java — Acme Support backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/acme-backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn -B verify
