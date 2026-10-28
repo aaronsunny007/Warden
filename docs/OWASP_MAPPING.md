@@ -21,6 +21,7 @@ coverage panel and in the dbt `owasp_coverage` mart.
 | W-ARG-005 | arguments | block | ASI01, MCP06, MCP10 — post-read long query-string egress to a new host |
 | W-TAINT-001 | arguments | step_up | ASI01, ASI02, MCP06 — tainted session: untraceable recipient/destination |
 | W-TAINT-002 | arguments | step_up | ASI02, ASI09 — tainted session: untraceable payment / refund amount |
+| W-TAINT-003 | arguments | step_up | ASI01, ASI02, ASI06 — tainted session: write to a protected resource (policy/config path, customer master-data note) |
 | W-OUT-001 | output | redact | ASI01, MCP10, ASI06 — indirect prompt injection in tool output |
 | W-OUT-002 | output | redact | ASI01, MCP10 — role/boundary-tag spoofing in output |
 | W-OUT-003 | output | redact | ASI01, MCP10 — hidden Unicode in output |
@@ -35,10 +36,10 @@ coverage panel and in the dbt `owasp_coverage` mart.
 
 | ID | Category | Covered by |
 | --- | --- | --- |
-| ASI01 | Agent goal / instruction hijack | W-DESC-002, W-ARG-004/005, W-TAINT-001, W-OUT-001/002/003/005/006/007 |
-| ASI02 | Tool / action abuse | W-ARG-001/002/003, W-TAINT-001/002 |
+| ASI01 | Agent goal / instruction hijack | W-DESC-002, W-ARG-004/005, W-TAINT-001/003, W-OUT-001/002/003/005/006/007 |
+| ASI02 | Tool / action abuse | W-ARG-001/002/003, W-TAINT-001/002/003 |
 | ASI04 | Deceptive tool metadata | W-DESC-001/002 |
-| ASI06 | Memory / context poisoning | W-OUT-001, W-OUT-007 |
+| ASI06 | Memory / context poisoning | W-OUT-001, W-OUT-007, W-TAINT-003 |
 | ASI09 | Unsafe financial / high-impact actions | W-TAINT-002 |
 | ASI03, ASI05, ASI07, ASI08, ASI10 | — | **gaps** — see below |
 

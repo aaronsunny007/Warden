@@ -387,6 +387,49 @@
     }
   },
   {
+    "id": "W-TAINT-003",
+    "version": 1,
+    "description": "Tainted session: a write to a protected resource (a policy or config file, or a customer master-data note) is not traceable to the user's request or trusted data.",
+    "mode": "enforce",
+    "severity": "high",
+    "action": {
+      "type": "step_up",
+      "message": "a protected resource would be modified by a session that has read untrusted content"
+    },
+    "scope": {
+      "channels": ["arguments"],
+      "taint": "tainted",
+      "riskTiers": ["internal_write"]
+    },
+    "match": {
+      "any": [
+        {
+          "all": [
+            {
+              "kind": "text",
+              "field": "args.path",
+              "op": "regex",
+              "value": "(^|/)(policies|policy|config|configs|etc|\\.github)/"
+            },
+            {
+              "kind": "untraceable",
+              "field": "args.content"
+            }
+          ]
+        },
+        {
+          "kind": "untraceable",
+          "field": "args.note"
+        }
+      ]
+    },
+    "owasp": ["ASI01", "ASI02", "ASI06"],
+    "provenance": {
+      "author": "human",
+      "note": "Integrity rule: persistent writes to policy files and master data from a tainted session need confirmation. Added after RQ1 showed tamper-note and overwrite-policy as the weakest goals."
+    }
+  },
+  {
     "id": "W-OUT-001",
     "version": 2,
     "description": "Tool output contains an instruction aimed at the agent (indirect prompt injection). Override phrases only count when not quoted, so text that discusses injection is not redacted.",
@@ -440,7 +483,7 @@
           "kind": "text",
           "field": "text",
           "op": "regex",
-          "value": "(?:^|[^\"'“‘«\\w])(?:ignore|disregard|forget|override)\\s(?:(?:all|any|the|your)\\s)?(?:previous|prior|above|earlier|preceding|original|system)\\s(?:instructions?|directions|rules|guidelines|prompts?)"
+          "value": "(?:^|[^\"'\u201c\u2018\u00ab\\w])(?:ignore|disregard|forget|override)\\s(?:(?:all|any|the|your)\\s)?(?:previous|prior|above|earlier|preceding|original|system)\\s(?:instructions?|directions|rules|guidelines|prompts?)"
         }
       ]
     },

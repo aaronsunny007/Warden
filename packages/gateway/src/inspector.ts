@@ -103,11 +103,37 @@ function deepReplace(v: unknown, fn: (s: string) => string): unknown {
 }
 
 const MAX_PARAGRAPH = 1200;
+/** Stage-2 sanitising scores each paragraph; beyond this many, withhold instead. */
+const LOCALISE_MAX_UNITS = 16;
+/** A paragraph is removed only if the detector alone scores it at least this high (the W-OUT-006 bar). */
+const LOCALISE_BAR = 0.92;
+
+// Tool outputs are often JSON text, where a paragraph break inside a string value is the two
+// characters `\n` rather than a real newline. Treat both as breaks so an injected paragraph is
+// removed on its own and the legitimate text around it survives.
+const PARA_BREAK = /(\n\s*\n|(?:\\n){2,})/;
+const LINE_BREAK = /(\n|\\n)/;
+const JSON_PREFIX = /^\s*"[^"\\]{1,64}":\s*"/;
+const JSON_SUFFIX = /["',\]}\s]+$/;
+// Pretty-printed JSON puts one value per line, so a "paragraph" of it is not one idea.
+const looksStructured = (t: string): boolean => /\n\s*["}\]]/.test(t) || /^\s*[[{]/.test(t);
+
+/** The units redactResult operates on: paragraphs, or lines for long or JSON-structured text. */
+export function splitUnits(text: string): string[] {
+  const out: string[] = [];
+  for (const para of text.split(PARA_BREAK)) {
+    if (PARA_BREAK.test(para) && !para.trim().replace(/\\n/g, '')) continue;
+    const units = para.length > MAX_PARAGRAPH || looksStructured(para) ? para.split(LINE_BREAK) : [para];
+    for (const u of units) if (u !== '\n' && u !== '\\n' && u.trim().length >= 3) out.push(u);
+  }
+  return out;
+}
 
 /**
  * Redact the paragraph (or line, for long paragraphs) that contains each match, comparing on
  * normalised text so zero-width and look-alike tricks cannot hide a match. Hidden characters are
- * stripped. Returns null if any match cannot be located, so the caller can withhold the output.
+ * stripped. JSON structure around a redacted string value is preserved. Returns null if any match
+ * cannot be located, so the caller can withhold the output.
  */
 export function redactResult(result: ToolResult, matches: RuleMatch[]): ToolResult | null {
   const ids = [...new Set(matches.map((m) => m.ruleId))].join(',');
@@ -125,14 +151,14 @@ export function redactResult(result: ToolResult, matches: RuleMatch[]): ToolResu
     let t = text;
     for (const h of hidden) t = t.split(h).join('');
     if (!needles.size) return t;
-    const paragraphs = t.split(/(\n\s*\n)/);
+    const paragraphs = t.split(PARA_BREAK);
     return paragraphs
       .map((para) => {
-        if (/^\n\s*\n$/.test(para)) return para;
-        const units = para.length > MAX_PARAGRAPH ? para.split(/(\n)/) : [para];
+        if (PARA_BREAK.test(para) && !para.trim().replace(/\\n/g, '')) return para;
+        const units = para.length > MAX_PARAGRAPH || looksStructured(para) ? para.split(LINE_BREAK) : [para];
         return units
           .map((u) => {
-            if (u === '\n') return u;
+            if (u === '\n' || u === '\\n') return u;
             const n = normalize(u).toLowerCase();
             let hit = false;
             for (const needle of needles)
@@ -140,7 +166,10 @@ export function redactResult(result: ToolResult, matches: RuleMatch[]): ToolResu
                 found.add(needle);
                 hit = true;
               }
-            return hit ? marker : u;
+            if (!hit) return u;
+            const prefix = JSON_PREFIX.exec(u)?.[0] ?? '';
+            const suffix = JSON_SUFFIX.exec(u.slice(prefix.length))?.[0] ?? '';
+            return `${prefix}${marker}${suffix}`;
           })
           .join('');
       })
@@ -191,6 +220,81 @@ export class Inspector {
     }
     ctx.detector = scoresOf(r);
     return { result: r, failsafe: false };
+  }
+
+  /**
+   * Try to turn a would-be block into a verified redaction, so legitimate content around an
+   * injection is not lost with it. Two stages, each followed by a full re-check:
+   *   1. remove the spans the rules located;
+   *   2. if the detector still objects, score each paragraph and remove those that would trip the
+   *      detector bar on their own.
+   * The result is released only when the exact text to be delivered passes the whole policy and
+   * detector cascade. A detector outage, an unlocatable span, too many paragraphs to score, or any
+   * residual objection leaves the output withheld.
+   */
+  private async sanitise(
+    ctx: MessageContext,
+    result: ToolResult,
+    ev: Evaluation,
+  ): Promise<ToolResult | null> {
+    const clean = async (r: ToolResult): Promise<boolean | null> => {
+      const ctx2: MessageContext = { ...ctx, text: resultText(r) };
+      const { result: det, failsafe } = await this.cascade(ctx2);
+      if (failsafe || det?.unavailable) return null;
+      const after = this.policies.policy.evaluate(ctx2);
+      return after.decision === 'allow' || after.decision === 'taint_session';
+    };
+
+    let current = result;
+    const located = ev.enforced.filter((m) => m.evidence.some((e) => e.span?.text));
+    if (located.length) {
+      const cleaned = redactResult(result, located);
+      if (!cleaned) return null;
+      if (resultText(cleaned) !== ctx.text) {
+        current = cleaned;
+        const ok = await clean(current);
+        if (ok === null) return null;
+        if (ok) return current;
+      }
+    }
+
+    // Stage 2: detector-guided localisation.
+    if (!this.detectorWanted('output')) return null;
+    const units = splitUnits(resultText(current));
+    if (!units.length || units.length > LOCALISE_MAX_UNITS) return null;
+    const scored = await Promise.all(
+      units.map((text) =>
+        this.detector.detect({
+          text,
+          channel: 'output',
+          riskTier: ctx.riskTier,
+          sessionId: ctx.sessionId,
+          tool: `${ctx.server}.${ctx.tool}`,
+        }),
+      ),
+    );
+    if (scored.some((r) => r.unavailable)) return null;
+    const flagged = units.filter(
+      (_, i) => Math.max(0, ...scored[i]!.layers.map((l) => l.score)) >= LOCALISE_BAR,
+    );
+    if (!flagged.length) return null;
+    const synthetic: RuleMatch = {
+      ruleId: 'W-OUT-006',
+      version: 1,
+      hash: 'localised',
+      mode: 'enforce',
+      action: 'redact',
+      severity: 'high',
+      owasp: [],
+      evidence: flagged.map((text) => ({
+        kind: 'detector',
+        field: 'text',
+        span: { start: 0, end: text.length, text },
+      })),
+    };
+    const localised = redactResult(current, [synthetic]);
+    if (!localised || resultText(localised) === resultText(current)) return null;
+    return (await clean(localised)) ? localised : null;
   }
 
   private record(
@@ -381,8 +485,22 @@ export class Inspector {
         extra.push('detection unavailable; output passed unchecked and session tainted');
       }
 
+      // A block driven partly by locatable spans need not cost the legitimate content: redact the
+      // spans, then re-run the whole policy and detector on what would be delivered. Only a
+      // residual that passes everything is released; anything else stays withheld.
+      let sanitised: ToolResult | null = null;
+      if (decision === 'block' && !unchecked) {
+        sanitised = await this.sanitise(ctx, result, ev);
+        if (sanitised) {
+          decision = 'redact';
+          extra.push('blocked output sanitised and re-verified clean; released with injected spans removed');
+        }
+      }
+
       let out: ToolResult = result;
-      if (decision === 'block') {
+      if (decision === 'redact' && sanitised) {
+        out = sanitised;
+      } else if (decision === 'block') {
         const ids = ev.enforced.map((m) => m.ruleId).join(', ') || 'failsafe';
         out = {
           content: [

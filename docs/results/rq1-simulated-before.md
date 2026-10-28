@@ -1,3 +1,5 @@
+> **Superseded.** This is the first run, kept for the before/after comparison. See `rq1-simulated.md` for the run after the gateway and ruleset changes described in docs/DECISIONS.md (ADR-0013 to ADR-0015).
+
 # Warden evaluation: rq1
 
 Run `20261028T202016Z` · 2026-10-28T20:20:16+00:00 · agent `simulated` · Warden 0.1.0

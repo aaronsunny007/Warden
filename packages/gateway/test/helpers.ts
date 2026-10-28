@@ -53,7 +53,7 @@ export interface Harness {
 }
 
 export async function startHarness(
-  opts: { rules?: unknown[]; servers?: string[]; refreshSeconds?: number } = {},
+  opts: { rules?: unknown[]; servers?: string[]; refreshSeconds?: number; detectorUrl?: string } = {},
 ): Promise<Harness> {
   const lab = await createLabApp(loadWorld(join(ROOT, 'data/lab/world.json')));
   const labUrl = await lab.app.listen({ host: '127.0.0.1', port: 0 });
@@ -76,7 +76,7 @@ admin: { token: test-token }
 policy:
   bundle: ${bundle.path}
   trustedKeys: { test: ${JSON.stringify(bundle.publicKeyPem)} }
-pins: { store: memory, autoApproveClean: true, refreshSeconds: ${opts.refreshSeconds ?? 0} }
+${opts.detectorUrl ? `detector: { url: ${opts.detectorUrl}, timeoutMs: 2000, channels: [output], cacheTtlSeconds: 0 }\n` : ''}pins: { store: memory, autoApproveClean: true, refreshSeconds: ${opts.refreshSeconds ?? 0} }
 servers:
 ${servers
   .map(

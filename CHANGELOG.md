@@ -2,6 +2,31 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.1] - 2026-10-28
+
+### Fixed
+
+- **Compose lab** now runs end to end (first real `docker compose up` found five bugs): `alembic` not on PATH,
+  unwritable shared policy volume, missing shadow-stage approvals when signing the demo bundle, and
+  `${VAR:-}` config placeholders failing schema validation (gateway now treats YAML null as unset).
+- **Helm chart** loads the same init script as compose (it had drifted) and migrates with `python -m alembic`.
+- **CI** passes from a clean checkout: build before typecheck, committed `python/uv.lock`, install the `agents`
+  extra, tag integration tests so `-m integration` selects them (they were never selected), correct
+  `trivy-action` pin, and a narrow gitleaks allowlist for deliberate fake fixtures.
+
+### Changed
+
+- **Gateway: sanitise-then-reverify** for blocked outputs, with JSON-aware redaction (ADR-0013). Utility under
+  attack 86.5% → 96.7%; B3 ASR 4.5% → 3.0%; no attack newly succeeds.
+- Base images are overridable (`WARDEN_NODE_IMAGE`, `WARDEN_PYTHON_IMAGE`); `uv` is installed from PyPI in the image.
+- Demo script replays a synthetic injection attack and prints the shadow detections.
+
+### Added
+
+- Rule **W-TAINT-003** protected-write step-up (ADR-0014); baseline is now 20 rules.
+- `training/train_l2_scratch.py`: no-download PyTorch → ONNX L2 with a self-check against the real loader.
+- Sanitise end-to-end tests with a stub detector (release, split-payload, outage).
+
 ## [0.1.0] - 2026-10-28
 
 ### Added

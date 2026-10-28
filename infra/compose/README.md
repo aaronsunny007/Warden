@@ -58,3 +58,14 @@ docker compose --profile obs --profile kafka --profile demo down -v   # -v also 
 - The L3 LLM judge is **off** unless you point `WARDEN_OLLAMA_URL` at an Ollama server and name
   a model (`WARDEN_JUDGE_MODEL`). The cascade runs L0–L2 without it.
 - Data is reset by dropping the `pgdata`, `policy` and `verdicts` volumes (`down -v`).
+
+## Behind a TLS-inspecting proxy or a private registry
+
+The image builds take their base images from build args. Point them at your own mirror, or at a base
+image that already trusts your proxy CA, without editing any Dockerfile:
+
+```bash
+WARDEN_NODE_IMAGE=registry.example.com/node:22-bookworm-slim \
+WARDEN_PYTHON_IMAGE=registry.example.com/python:3.12-slim-bookworm \
+docker compose build
+```
