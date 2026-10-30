@@ -35,3 +35,9 @@ analytics/dbt/target/
 analytics/dbt/logs/
 results/**/raw/
 python/uv.lock.bak
+
+# graphify: commit only graph.json, GRAPH_REPORT.md and graph.html
+graphify-out/cache/
+graphify-out/.graphify_*
+graphify-out/cost.json
+graphify-out/manifest.json
