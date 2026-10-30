@@ -57,6 +57,14 @@ def cmd_eval(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_locked(a: argparse.Namespace) -> int:
+    from warden.eval.locked import run
+
+    onnx = dict(x.split("=", 1) for x in a.onnx or [])
+    print(json.dumps(run(Path(a.out), onnx), indent=2))
+    return 0
+
+
 def cmd_agentdojo(a: argparse.Namespace) -> int:
     import asyncio
 
@@ -132,6 +140,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="exit 3 if B3/B4 miss the H1 targets (CI merge gate)",
     )
     e.set_defaults(fn=cmd_eval)
+
+    lk = eval_sub.add_parser("locked", help="score the locked test splits once (needs WARDEN_UNLOCK_TEST=1)")
+    lk.add_argument("--out", default="../docs/results/locked-test.json")
+    lk.add_argument(
+        "--onnx", action="append", help="TAG=dir of an extra ONNX L2 bundle to score alongside lite"
+    )
+    lk.set_defaults(fn=cmd_locked)
 
     ad = eval_sub.add_parser("agentdojo", help="V1: run an AgentDojo suite through each baseline")
     ad.add_argument("--suite", default="banking", choices=["workspace", "banking", "travel", "slack"])

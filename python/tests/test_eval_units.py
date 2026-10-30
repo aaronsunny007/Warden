@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -110,3 +111,17 @@ async def test_graph_agent_drives_tools() -> None:
     assert [c.name for c in tools.calls] == ["tickets.get_ticket"]
     assert tools.calls[0].args == {"id": "T-501"}
     assert "VAT" in ep.answer
+
+
+def test_locked_run_guards(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from warden.corpus import LockedSplitError
+    from warden.eval.locked import run
+
+    monkeypatch.delenv("WARDEN_UNLOCK_TEST", raising=False)
+    with pytest.raises(LockedSplitError):
+        run(tmp_path / "o.json")
+    monkeypatch.setenv("WARDEN_UNLOCK_TEST", "1")
+    done = tmp_path / "done.json"
+    done.write_text("{}")
+    with pytest.raises(FileExistsError):
+        run(done)

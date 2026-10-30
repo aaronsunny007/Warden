@@ -1,0 +1,120 @@
+name: verify
+
+# The checks the build sandbox could not run: a live Kubernetes install, terraform validate, the
+# fine-tuned DeBERTa L2, and the one-shot locked-test-split run.
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths:
+      - '.github/workflows/verify.yml'
+      - 'infra/**'
+      - 'training/**'
+      - 'python/src/warden/eval/locked.py'
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  helm-kind:
+    name: helm — install on a live kind cluster
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - uses: helm/kind-action@v1
+        with:
+          cluster_name: warden
+          config: infra/kind/kind-config.yaml
+      - name: Build and load the images
+        run: |
+          docker build -f infra/docker/node.Dockerfile   -t warden/node:ci .
+          docker build -f infra/docker/python.Dockerfile -t warden/python:ci .
+          docker build -f apps/dashboard/Dockerfile      -t warden/dashboard:ci .
+          for i in node python dashboard; do kind load docker-image warden/$i:ci --name warden; done
+      - name: helm install --wait
+        run: |
+          helm upgrade --install warden infra/helm/warden --namespace warden --create-namespace \
+            --set images.node.tag=ci --set images.python.tag=ci --set images.dashboard.tag=ci \
+            --wait --timeout 15m
+      - name: Smoke test through the cluster
+        run: |
+          kubectl -n warden get pods
+          kubectl -n warden port-forward svc/gateway 8787:8787 &
+          kubectl -n warden port-forward svc/dashboard 3000:3000 &
+          sleep 5
+          curl -fsS http://localhost:8787/api/v1/status
+          curl -fsS -o /dev/null -w 'dashboard %{http_code}\n' http://localhost:3000/
+      - name: Diagnostics
+        if: failure()
+        run: |
+          kubectl -n warden get pods,jobs -o wide
+          kubectl -n warden describe pods | tail -150
+          for p in $(kubectl -n warden get pods -o name); do echo "--- $p"; kubectl -n warden logs "$p" --all-containers --tail=60 || true; done
+
+  terraform:
+    name: terraform — fmt and validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+
+  l2-deberta-and-locked-test:
+    name: L2 — fine-tune DeBERTa, then score the locked test split once
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/claude/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - name: Install (ml + train extras)
+        run: |
+          uv sync --frozen --group dev --extra agents --extra ml --extra train
+          uv pip install onnxscript
+      - name: Fine-tune DeBERTa on the dev split and export ONNX
+        run: |
+          uv run python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --epochs 3 --out ../models/l2-deberta
+      - name: Train the from-scratch L2 for comparison
+        run: uv run python ../training/train_l2_scratch.py --out ../models/l2-scratch
+      - name: Locked test split, scored once
+        id: locked
+        if: hashFiles('docs/results/locked-test.json') == ''
+        env:
+          WARDEN_UNLOCK_TEST: '1'
+        run: |
+          uv run warden eval locked --out ../docs/results/locked-test.json \
+            --onnx deberta=$GITHUB_WORKSPACE/models/l2-deberta --onnx scratch=$GITHUB_WORKSPACE/models/l2-scratch
+      - name: Record the results
+        run: |
+          cp ../models/l2-deberta/metrics.json ../docs/results/l2-deberta-metrics.json
+          cd ..
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/results
+          git diff --cached --quiet || { git commit -m 'docs(results): DeBERTa L2 dev metrics and the locked test split [skip ci]'; git push; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: l2-onnx-bundles
+          path: models/
