@@ -69,6 +69,7 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--opset", type=int, default=17)
     ap.add_argument("--detect-anomaly", action="store_true", help="debug: name the op whose backward makes NaN")
+    ap.add_argument("--threads", type=int, default=0, help="torch CPU threads (0 = library default)")
     ap.add_argument("--min-f1", type=float, default=0.5, help="refuse to export a model below this dev F1")
     ap.add_argument("--max-drift", type=float, default=1e-2, help="max torch-vs-served probability drift")
     a = ap.parse_args()
@@ -100,6 +101,8 @@ def main() -> int:
         label2id={name: i for i, name in enumerate(LABELS)},
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    if a.threads:
+        torch.set_num_threads(a.threads)
     if a.detect_anomaly:
         torch.autograd.set_detect_anomaly(True)
     torch.set_flush_denormal(True)  # denormal float32 math can slow CPU backward passes by orders of magnitude

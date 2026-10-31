@@ -18,7 +18,7 @@ permissions:
 jobs:
   deberta-dev:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: python
@@ -36,7 +36,7 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
           TOKENIZERS_PARALLELISM: 'false'
-        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2 --detect-anomaly
+        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2 --threads 1 --max-len 96 --epochs 6
       - name: Metrics
         if: always()
         run: cat ../models/l2-deberta-v2/metrics.json || true
