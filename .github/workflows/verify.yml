@@ -92,19 +92,19 @@ jobs:
       - name: Install (ml + train extras)
         run: |
           uv sync --frozen --group dev --extra agents --extra ml --extra train
-          uv pip install onnxscript
+          uv pip install onnxscript sentencepiece protobuf tiktoken
       - name: Fine-tune DeBERTa on the dev split and export ONNX
         run: |
-          uv run python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --epochs 3 --out ../models/l2-deberta
+          uv run --no-sync python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --epochs 3 --out ../models/l2-deberta
       - name: Train the from-scratch L2 for comparison
-        run: uv run python ../training/train_l2_scratch.py --out ../models/l2-scratch
+        run: uv run --no-sync python ../training/train_l2_scratch.py --out ../models/l2-scratch
       - name: Locked test split, scored once
         id: locked
         if: hashFiles('docs/results/locked-test.json') == ''
         env:
           WARDEN_UNLOCK_TEST: '1'
         run: |
-          uv run warden eval locked --out ../docs/results/locked-test.json \
+          uv run --no-sync warden eval locked --out ../docs/results/locked-test.json \
             --onnx deberta=$GITHUB_WORKSPACE/models/l2-deberta --onnx scratch=$GITHUB_WORKSPACE/models/l2-scratch
       - name: Record the results
         run: |
