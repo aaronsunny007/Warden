@@ -7,3 +7,5 @@ coverage
 deploy/helm/**/templates
 infra/helm/**/templates
 *.md
+docs/results
+graphify-out

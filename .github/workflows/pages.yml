@@ -1,0 +1,52 @@
+name: pages
+
+# Publishes the report (PDF) and the rendered docs to GitHub Pages. This is a documentation site, not a
+# deployment of the gateway. One-time setup: repo Settings > Pages > Source: "GitHub Actions".
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'ccr-*', 'claude/**']
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'site/**'
+      - 'docs/**'
+      - 'report/**'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 report/make_tables.py
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: report
+      - run: |
+          python3 -m pip install markdown
+          python3 site/build_site.py _site report/main.pdf
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

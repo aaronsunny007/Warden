@@ -1,0 +1,10 @@
+{
+  "base_model": "microsoft/deberta-v3-xsmall",
+  "val": {
+    "accuracy": 0.5535714285714286,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "fpr": 0.0
+  }
+}

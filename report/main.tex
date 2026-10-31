@@ -1,43 +1,233 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[margin=2.5cm]{geometry}
-\usepackage{booktabs,hyperref,graphicx}
-\title{Warden: A Validation-Gated, Self-Improving Security Gateway for AI Agents and MCP Tools}
+\usepackage{booktabs,hyperref,graphicx,array,tabularx,microtype}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\newcommand{\sidebar}[1]{\par\smallskip\noindent\textbf{#1}\ }
+\title{Warden: A Validation-Gated, Self-Improving Security Gateway\\for AI Agents and MCP Tools}
 \author{Sunny Aaron}
 \date{\today}
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Warden inspects the three channels an attacker can reach in the Model Context Protocol (tool
-descriptions, arguments and outputs), tracks session taint, and enforces a signed, hash-bound
-policy. A red/blue loop proposes defences from confirmed bypasses, and an eight-stage validation gate
-checks that each is harmless to benign work before it may enforce. We report measured results with
-confidence intervals, including negative results. \textbf{Results here use a simulated victim agent;}
-see Section~\ref{sec:limits}.
+Warden inspects the three channels an attacker can reach in the Model Context Protocol (MCP):
+tool descriptions, arguments and outputs. It tracks session taint and enforces a signed,
+hash-bound policy. A red/blue loop proposes defences from confirmed bypasses, and an eight-stage
+validation gate checks that each one is harmless to benign work before it may enforce. We report
+measured results with confidence intervals, including negative ones. \textbf{The end-to-end
+attack-success numbers (RQ1--RQ3) use a simulated victim agent, not a real language model;} read
+them as properties of the defence pipeline, not as estimates of real-world risk
+(Section~\ref{sec:limits}). On the locked test split, scored once, the cascade with a from-scratch
+classifier blocks 98.2\% of in-distribution attacks (Wilson 95\% CI 90.5--99.7) and 88.9\% of
+out-of-distribution attacks (67.2--96.9) at a 1.9\% benign block rate. A fine-tuned DeBERTa
+classifier \emph{diverged during training} in the locked run, so its locked row is a broken model;
+a corrected configuration reaches F1~0.98 on the development hold-out only.
 \end{abstract}
 
 \section{Introduction}
-Problem, threat model (see \texttt{docs/THREAT\_MODEL.md}), contributions.
+An agent that uses tools over MCP trusts three things it should not: the descriptions of the tools
+it is offered, the arguments a possibly manipulated model decides to send, and the outputs the tools
+return. A malicious server can poison a description; a hijacked model can exfiltrate data or take
+harmful external actions; and tool outputs carry outside content (emails, web pages, tickets) that
+may hold indirect prompt injections.
+
+Warden is a gateway that sits between the agent and its MCP servers and inspects all three
+channels on every message. Its defining claim is about how it \emph{changes}: a self-improving
+defence is only safe if each new rule is proven not to harm benign work before it can enforce. The
+contributions are:
+\begin{itemize}
+  \item a typed policy IR with a trusted compiler and Ed25519-signed bundles whose approvals are bound to the hash of a rule \emph{including its mode};
+  \item a gateway with description pinning, spotlighting and set-only session taint;
+  \item a four-layer detection cascade (L0--L3);
+  \item an eight-stage validation gate (G1--G8) that a red/blue learning loop must pass; and
+  \item an evaluation harness with Wilson intervals, exact McNemar tests, and a write-once locked test split.
+\end{itemize}
+
+\section{Threat model}
+The protected assets are the organisation's data, its ability to take correct external actions
+(email, payments), and the agent's integrity of purpose. The agent's model is \emph{not} trusted to
+resist manipulation; the gateway and its signed policy bundle form the trusted computing base.
+Tool outputs are untrusted data on every channel, and servers marked untrusted taint the session
+on any output. We consider four adversaries:
+\begin{enumerate}
+  \item a malicious or compromised MCP server (poisoned or shadowing descriptions, hidden-Unicode instructions, rug pulls);
+  \item an attacker who can place text where the agent will read it (a ticket, an email, a web page);
+  \item a hijacked model attempting exfiltration or harmful actions with plausible-looking arguments; and
+  \item an adversary against the learning loop itself, who crafts attacks whose obvious defence would also fire on benign traffic, trying to induce self-denial-of-service (RQ2).
+\end{enumerate}
+Out of scope are compromise of the host, signing key or trusted compiler; a malicious operator
+approving a harmful rule at G8; the model provider's own safety; and network-level attacks on TLS.
+All red-team activity targets only Warden's own lab, and all data in it is synthetic. The full
+model is in \texttt{docs/THREAT\_MODEL.md}, with an OWASP ASI/MCP Top~10 mapping in
+\texttt{docs/OWASP\_MAPPING.md}.
 
 \section{Design}
-Policy IR and trusted compiler; gateway; detection cascade L0--L3; validation gate G1--G8
-(see \texttt{docs/DESIGN.md}).
+\sidebar{Policy IR and compiler.} Rules have four modes: \texttt{off}, \texttt{shadow},
+\texttt{canary} and \texttt{enforce}. The trusted compiler performs the G1 static checks, rejecting
+unsafe regular expressions and malformed matchers. Bundles are Ed25519-signed, and an approval
+references the canonical-JSON SHA-256 of the rule with its mode, so a shadow-mode approval cannot be
+replayed to authorise enforcement.
+
+\sidebar{Gateway.} The gateway proxies the real servers, pins tool descriptions and re-lists
+upstream tools to catch silent rug pulls, applies spotlighting, and tracks session taint. Taint is
+set-only: once outside content has been read, the session stays tainted, so later high-risk actions
+are gated regardless of intervening clean steps. High-risk channels fail closed when a detector is
+unavailable; read-only channels fail open.
+
+\sidebar{Detection cascade.} L0 is a deterministic ruleset. L1 is embedding $k$NN over the
+development corpus. L2 is a classifier: a logistic-regression model that is always available, or an
+ONNX model (a from-scratch network or a fine-tuned transformer). L3 is a local LLM judge consulted
+only in the uncertainty band. Short-text abstention and a contrastive benign corpus keep the
+false-positive rate down.
+
+\sidebar{Validation gate.} A proposed rule must pass, in order: G1 static checks; G2 replay over
+recorded benign tool traffic (it must not fire on legitimate messages); G3 a utility budget; G4
+efficacy against the confirmed bypass that motivated it; G5 generalisation to held-out variants; G6
+a latency budget; G7 rule/LLM/token rate budgets; and G8 a human signature on the enforce-mode
+bundle. Machine approval exists only as an explicit, audited opt-out used by CI and the lab.
+
+\sidebar{Learning loop.} A red team mutates attacks against the live gateway in the lab. A
+confirmed bypass seeds a blue team that proposes a rule, and the gate decides whether it may
+promote. Defence memory records what each rule answers.
 
 \section{Evaluation}
 \subsection{Setup}
-Baselines B0--B4; research questions RQ1--RQ3; Wilson intervals, exact McNemar, bootstrap; locked test split.
-\subsection{RQ1: detection and benign utility}
+Baselines are B0 (direct, no Warden), B1 (spotlighting only), B2 (classifier on outputs only) and
+B3 (the full baseline ruleset); B4 adds the rules the loop promoted. Proportions carry Wilson 95\%
+intervals; paired detector comparisons use the exact McNemar test; overhead differences use a
+bootstrap. The corpus is synthetic and written for this project. It has a development split, used
+for all tuning and training, and two locked splits, \texttt{test\_iid} and \texttt{test\_ood}, held
+under a SHA-256 lock that refuses to load without an explicit unlock flag (ADR-0009).
+
+\textbf{Simulated victim.} RQ1--RQ3 use a scripted victim agent in place of a language model. It
+follows each benign task's plan and, when it sees an attacker's instruction intact in a tool output
+or description, complies with a probability taken from the scenario file (scaled down inside
+Warden's spotlight boundary). The pipeline (gateway, detection, policy, lab state) is exercised end
+to end while the model's susceptibility is a parameter, not a measurement. Attack-success rates therefore compare defences against each other under the same
+victim; they do not estimate how often a real model would be hijacked.
+
+\subsection{RQ1: detection and benign utility (simulated victim, development set)}
+Table~\ref{tab:rq1} reports attack success rate (ASR) over $n=1159$ attack attempts and the
+benign false-positive rate over 62 benign messages. The full baseline B3 cuts ASR from 31.9\% to
+3.0\% (95\% CI 2.2--4.2) with 96.7\% utility under attack, which meets the target we set as hypothesis H1
+(ASR $\le 5\%$, utility loss $\le 2$ points on benign tasks). Utility under attack is lowest for B2
+(80.0\%); we have not isolated why.
+Every baseline differs from B0 in ASR at $p<10^{-50}$ (exact McNemar), with no case where a
+baseline fails an attack that B0 blocks. These are development-set numbers: the rules were written
+while looking at this corpus, so they are optimistic.
+\begin{table}[h]
+\centering\small
+\caption{RQ1 on the development set with the \emph{simulated} victim. Wilson 95\% intervals.}\label{tab:rq1}
 \input{tables/rq1.tex}
-\subsection{RQ2: does the gate prevent self-DoS?}
-Mechanism demonstrated (G2 rejection, unit-tested); magnitude requires a real-LLM victim.
+\end{table}
+
+\subsection{Locked test split, scored once}
+\IfFileExists{tables/locked.tex}{%
+The locked splits were scored exactly once, by a CI job, after the classifiers had been trained on
+the development split only. The scorer refuses to overwrite its output file, so a second look is not
+possible without deleting a committed result. Table~\ref{tab:locked} reports the cascade with
+three different L2 layers, and each L2 alone. \texttt{test\_iid} has 56 attacks and 53 benign
+messages; \texttt{test\_ood} has 18 attacks in two held-out families (compliance and encoded
+injections). ``Blocked'' means the detector would stop the message; ``flagged'' includes
+lower-confidence alerts (any verdict other than benign).
+\begin{table}[h]
+\centering\scriptsize
+\caption{Locked test split, scored once. Hits/$n$ = rate [Wilson 95\% CI]. No parameter was changed after this run.}\label{tab:locked}
+\input{tables/locked.tex}
+\end{table}
+
+\sidebar{The from-scratch L2 works.} With the scratch classifier the cascade blocks 98.2\% of
+in-distribution attacks and 88.9\% of out-of-distribution attacks at a 1.9\% benign block rate and
+a 1.9\% benign flag rate. Cascade and classifier alone are nearly equal, so on this corpus the
+classifier is doing most of the work. The intervals are wide: with 18 OOD attacks the lower bound is
+67.2\%, and the corpus is small and synthetic, so these numbers say the approach is viable, not that
+it will hold on real traffic.
+
+\sidebar{The DeBERTa row is a broken model, not a measurement of DeBERTa.} Fine-tuning
+\texttt{microsoft/deberta-v3-xsmall} on the 222-example training slice for three epochs gave a
+validation accuracy of 55.4\% with precision, recall and F1 all exactly 0.0: it predicted the benign
+class for every held-out development input. On the locked split its ONNX export flagged all 53
+benign messages and blocked none of the attacks. We first suspected under-training or an export bug.
+Later diagnostic runs showed otherwise: under the lockfile's PyTorch~2.15 and transformers~5.21 the
+training diverges to NaN (in four diagnostic runs the loss or gradient norm was non-finite within the
+first five steps, and anomaly detection reported \texttt{LogSoftmaxBackward0} returning NaN on the first
+backward pass; steps also took over a minute each). A NaN model predicts class~0 for
+every input, which matches the development result, and NaN scores at serving time read as
+``not benign'', which matches the locked result. We did not isolate whether PyTorch or transformers
+is responsible. With PyTorch~2.8.0 and transformers~4.56.2, now pinned in the \texttt{train} extra,
+the same recipe (six epochs, learning rate $5\times10^{-5}$, 96 tokens) trains normally: on the
+56-example development hold-out it reaches accuracy 98.2\%, precision 100\%, recall 96\% and F1~0.98,
+and the served ONNX bundle matches PyTorch to $5\times10^{-7}$. \textbf{That model has not been
+scored on the locked split.} The split was spent on the first run, and scoring the corrected model
+on it would invalidate the split; a locked-split result for DeBERTa needs newly collected test data.
+The locked row above therefore stands as the result for a model that had diverged.
+
+\sidebar{Not yet established.} The L3 LLM judge was not run for the locked split (\texttt{judge:
+false}) and no external embedding model was configured, so the table measures the cascade without L3.
+}{%
+The locked splits have not been scored; this section is a placeholder until the verification
+workflow commits \texttt{docs/results/locked-test.json}.}
+
+\subsection{RQ2: does the gate prevent self-denial-of-service?}
+We ran the loop for five rounds of 200 attempts with half of the attacks blending in benign
+phrasing, once gated and once with every proposal promoted without a gate (the RQ2 adversary).
+Table~\ref{tab:rq2} summarises the result. The gate rejected 20 proposals and promoted 5. The
+ungated loop promoted 20, one of which fails the benign-replay stage (it would fire on
+legitimate messages). The mechanism therefore works as
+designed: the G2 benign-replay stage caught the over-blocking rule that the ungated loop let
+through.
+
+\textbf{However, the damage was not measurable.} Benign utility did not move for either arm (13 of 13
+tasks both before and after), so the 10$\times$-reduction hypothesis (H2) is met only by its
+fallback criterion (``the ungated loop promoted a harmful rule and the gated one did not''), not by a
+ratio of utility lost. The benign task set has only 13 tasks, so it cannot resolve small losses, and
+the simulated victim does not react to a benign request being blocked the way a real agent would.
+This is one seed; we make no claim about the size of the induced self-DoS.
+\begin{table}[h]
+\centering\small
+\caption{RQ2: gated versus ungated loop (5 rounds $\times$ 200 attempts, blend rate 0.5, seed 7, simulated victim).}\label{tab:rq2}
+\input{tables/rq2.tex}
+\end{table}
+
 \subsection{RQ3: ASR across loop rounds}
-To be filled from \texttt{warden loop run} outputs.
+Table~\ref{tab:rq3} shows the gated loop over five rounds of 200 attempts each (no blending, seed 7,
+simulated victim). The bypass rate peaks at 6.0\% in round 1 (12 of 200), when the attacker's
+mutations first find gaps, then falls to 4.0\%, 0.5\% and 0.0\% as rules promote. Of 22 proposals,
+5 were promoted and 17 were rejected by the gate, and benign utility stayed at 13 of 13 throughout.
+The fall is an in-sample result: the attacker mutates from the same seed attacks the defender has
+just been shown, and the later rounds have few bypasses, so the final 0.0\% has a wide interval
+(Wilson upper bound about 1.9\% at $n=200$). A single seed also cannot separate the loop's effect
+from the attacker running out of new mutations.
+\begin{table}[h]
+\centering\small
+\caption{RQ3: gated loop ASR per round (simulated victim, seed 7).}\label{tab:rq3}
+\input{tables/rq3.tex}
+\end{table}
 
 \section{Limitations}\label{sec:limits}
-Simulated victim; synthetic corpus written for the project; partial OWASP coverage;
-untested out-of-distribution robustness.
+\begin{itemize}
+  \item \textbf{Simulated victim.} RQ1--RQ3 do not use a real language model. They show the pipeline behaves as designed; they do not estimate real attack success.
+  \item \textbf{Small synthetic corpus} written for this project. The test splits hold 109 in-distribution and 18 out-of-distribution messages, so intervals are wide, and synthetic text is easier than real traffic.
+  \item \textbf{One locked run, several variants.} Six detector variants were scored on the same locked data in a single pass. They are not corrected for multiple comparison, and the locked data cannot be reused.
+  \item \textbf{No locked-split result for a working DeBERTa.} The locked DeBERTa row is a diverged model; the corrected one is evaluated on a 56-example development hold-out only.
+  \item \textbf{RQ2 magnitude is unmeasured} (13-task benign set, one seed).
+  \item \textbf{Partial OWASP coverage}, with gaps listed in \texttt{docs/OWASP\_MAPPING.md}; no evaluation on public benchmark runs.
+  \item \textbf{Scope.} Warden sees what reaches an MCP tool call; it cannot see reasoning that never produces one.
+  \item \textbf{Deployment.} The Helm chart installs on a \texttt{kind} cluster in CI and Terraform passes \texttt{validate}; neither was applied to a real cloud account, and there is no hosted deployment.
+\end{itemize}
 
 \section{Related work}
-AgentDojo, LlamaFirewall, PromptGuard~2, MCP security literature, OWASP ASI/MCP Top~10.
+Warden builds on, and is complementary to, benchmark and defence work in this area:
+AgentDojo~\cite{debenedetti2024agentdojo} for evaluating injection attacks on tool-using agents; Llama Guard and LlamaFirewall~\cite{chennabasappa2025llamafirewall} and Prompt Guard for
+classifier-based screening; spotlighting~\cite{hines2024spotlighting}; and the OWASP Top~10 for
+agentic applications and for MCP. The new element here is not the detectors but the validation gate
+for the defence's own updates, which is the part the self-DoS experiment targets.
+
+\begin{thebibliography}{9}
+\bibitem{debenedetti2024agentdojo} E.~Debenedetti et al. AgentDojo: A dynamic environment to evaluate prompt injection attacks and defenses for LLM agents. NeurIPS Datasets and Benchmarks, 2024.
+\bibitem{chennabasappa2025llamafirewall} S.~Chennabasappa et al. LlamaFirewall: An open source guardrail system for building secure AI agents. 2025.
+\bibitem{hines2024spotlighting} K.~Hines et al. Defending against indirect prompt injection attacks with spotlighting. 2024.
+\end{thebibliography}
 
 \end{document}

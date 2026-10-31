@@ -10,6 +10,7 @@ on:
       - '.github/workflows/verify.yml'
       - 'infra/**'
       - 'training/**'
+      - 'report/**'
       - 'python/src/warden/eval/locked.py'
   workflow_dispatch:
 
@@ -89,24 +90,32 @@ jobs:
         with:
           enable-cache: true
       - run: uv python install 3.12
+      - name: Has the locked result already been recorded?
+        id: gate
+        run: |
+          if [ -f ../docs/results/locked-test.json ]; then echo "done=true" >> "$GITHUB_OUTPUT"; else echo "done=false" >> "$GITHUB_OUTPUT"; fi
       - name: Install (ml + train extras)
+        if: steps.gate.outputs.done != 'true'
         run: |
           uv sync --frozen --group dev --extra agents --extra ml --extra train
-          uv pip install onnxscript
+          uv pip install onnxscript sentencepiece protobuf tiktoken
       - name: Fine-tune DeBERTa on the dev split and export ONNX
+        if: steps.gate.outputs.done != 'true'
         run: |
-          uv run python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --epochs 3 --out ../models/l2-deberta
+          uv run --no-sync python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --epochs 3 --out ../models/l2-deberta
       - name: Train the from-scratch L2 for comparison
-        run: uv run python ../training/train_l2_scratch.py --out ../models/l2-scratch
+        if: steps.gate.outputs.done != 'true'
+        run: uv run --no-sync python ../training/train_l2_scratch.py --out ../models/l2-scratch
       - name: Locked test split, scored once
         id: locked
-        if: hashFiles('docs/results/locked-test.json') == ''
+        if: steps.gate.outputs.done != 'true'
         env:
           WARDEN_UNLOCK_TEST: '1'
         run: |
-          uv run warden eval locked --out ../docs/results/locked-test.json \
+          uv run --no-sync warden eval locked --out ../docs/results/locked-test.json \
             --onnx deberta=$GITHUB_WORKSPACE/models/l2-deberta --onnx scratch=$GITHUB_WORKSPACE/models/l2-scratch
       - name: Record the results
+        if: steps.gate.outputs.done != 'true'
         run: |
           cp ../models/l2-deberta/metrics.json ../docs/results/l2-deberta-metrics.json
           cd ..
@@ -115,6 +124,24 @@ jobs:
           git add docs/results
           git diff --cached --quiet || { git commit -m 'docs(results): DeBERTa L2 dev metrics and the locked test split [skip ci]'; git push; }
       - uses: actions/upload-artifact@v4
+        if: steps.gate.outputs.done != 'true'
         with:
           name: l2-onnx-bundles
           path: models/
+
+  report:
+    name: report — compile the LaTeX PDF
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate the results tables
+        run: python3 report/make_tables.py
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          working_directory: report
+      - uses: actions/upload-artifact@v4
+        with:
+          name: warden-report
+          path: report/main.pdf
