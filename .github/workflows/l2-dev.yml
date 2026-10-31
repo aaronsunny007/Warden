@@ -32,11 +32,14 @@ jobs:
         run: |
           uv sync --frozen --group dev --extra agents --extra ml --extra train
           uv pip install onnxscript sentencepiece protobuf tiktoken
+          # The lockfile resolves to very new torch/transformers; DeBERTa training NaNs on them in CI. Test older releases.
+          uv pip install 'torch==2.8.0' 'transformers==4.56.2'
+          uv pip list 2>/dev/null | grep -iE '^(torch|transformers|tokenizers|numpy) '
       - name: Fine-tune on dev, check parity, export
         env:
           PYTHONUNBUFFERED: '1'
           TOKENIZERS_PARALLELISM: 'false'
-        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2 --threads 1 --max-len 96 --epochs 6
+        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2 --max-len 96 --epochs 6
       - name: Metrics
         if: always()
         run: cat ../models/l2-deberta-v2/metrics.json || true
