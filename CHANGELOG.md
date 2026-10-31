@@ -13,11 +13,12 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ### Results
 
-- `terraform validate` passes. The locked test split was scored once: cascade + scratch L2 blocks 98.2% of iid and
+- `terraform validate` passes and the Helm chart installs on `kind` and answers its smoke tests. The locked test split was scored once: cascade + scratch L2 blocks 98.2% of iid and
   88.9% of OOD attacks at 1.9% benign block rate. The DeBERTa fine-tune did not learn (recall 0 on the dev hold-out).
 
 ### Fixed
 
+- **Helm chart deadlock** found by the first live `kind` install: the migration was a `post-install` hook, but `helm install --wait` waits for pod readiness first and the pods wait for the schema. It is now a regular Job named per release revision.
 - Dashboard image build (missing `public/` directory) and DeBERTa tokenizer dependencies in CI.
 
 ## [0.1.1] - 2026-10-28

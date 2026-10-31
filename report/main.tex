@@ -206,7 +206,7 @@ from the attacker running out of new mutations.
   \item \textbf{RQ2 magnitude is unmeasured} (13-task benign set, one seed).
   \item \textbf{Partial OWASP coverage}, with gaps listed in \texttt{docs/OWASP\_MAPPING.md}; no evaluation on public benchmark runs.
   \item \textbf{Scope.} Warden sees what reaches an MCP tool call; it cannot see reasoning that never produces one.
-  \item \textbf{Deployment.} The Helm chart and Terraform were validated in CI (see the repository's verification table); there is no hosted deployment.
+  \item \textbf{Deployment.} The Helm chart installs on a \texttt{kind} cluster in CI and Terraform passes \texttt{validate}; neither was applied to a real cloud account, and there is no hosted deployment.
 \end{itemize}
 
 \section{Related work}

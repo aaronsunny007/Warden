@@ -74,7 +74,7 @@ against unseen attacks. The confirmatory runs are the locked test split and a re
 | --- | --- |
 | TypeScript (policy 96 + gateway 42 tests), Python (30 unit + 4 integration against pgvector), Java (7), dashboard e2e | pass, in a clean checkout and on GitHub Actions |
 | Docker images and `docker compose up` | built and run: every service healthy, demo traffic and a replayed attack recorded in the gateway and Postgres |
-| Helm chart | `helm lint` and `helm template` pass for four option sets; **not installed on a live cluster** (a `kind` node would not start in the build sandbox) |
+| Helm chart | `helm lint`/`helm template` pass for four option sets, and the chart installs on a live `kind` cluster in CI (`helm install --wait`, then gateway and dashboard smoke-tested through port-forward). The first real install found a deadlock (migration as a post-install hook) that is now fixed |
 | Terraform | `fmt -check`, `init` and `validate` pass on a GitHub Actions runner (`verify` workflow) |
 | L2 classifier | the from-scratch L2 is exported to ONNX and served through the real loader (drift 1.8e-7). The DeBERTa fine-tune now runs in CI but **did not learn** (dev hold-out accuracy 55.4%, recall 0; see below) |
 | Locked test split | **scored once**, in CI, on 2026-10-31 (`docs/results/locked-test.json`, ADR-0009). It is not to be re-run or tuned against |

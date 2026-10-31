@@ -42,6 +42,6 @@ Common overrides:
   `helm install --wait` waits for pod readiness before post-install hooks run, which would deadlock.
 - The default resource requests/limits are sized for a laptop cluster. Raise them for real load.
 
-> The chart was authored to Helm conventions; `helm lint`/`helm template` were not run in the
-> build sandbox (no outbound access to fetch the Helm binary). Run `helm lint infra/helm/warden`
-> locally before deploying.
+> Verified in CI (`.github/workflows/verify.yml`): the chart installs on a live `kind` cluster with `helm install --wait`
+> and the gateway and dashboard answer through port-forward. It has not been run on a managed cluster or with
+> `ingress`/external-database options on a live install. Run `helm lint infra/helm/warden` before deploying.
