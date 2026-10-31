@@ -75,9 +75,28 @@ against unseen attacks. The confirmatory runs are the locked test split and a re
 | TypeScript (policy 96 + gateway 42 tests), Python (30 unit + 4 integration against pgvector), Java (7), dashboard e2e | pass, in a clean checkout and on GitHub Actions |
 | Docker images and `docker compose up` | built and run: every service healthy, demo traffic and a replayed attack recorded in the gateway and Postgres |
 | Helm chart | `helm lint` and `helm template` pass for four option sets; **not installed on a live cluster** (a `kind` node would not start in the build sandbox) |
-| Terraform | `fmt` clean; **`validate` not run** (the provider registry was unreachable from the build sandbox) |
-| L2 classifier | trained from scratch, exported to ONNX and served through the real loader (drift 1.8e-7); **the fine-tuned DeBERTa path was not run** (model hub unreachable) — see [`training/README.md`](training/README.md) |
-| LaTeX report | skeleton only, not compiled |
+| Terraform | `fmt -check`, `init` and `validate` pass on a GitHub Actions runner (`verify` workflow) |
+| L2 classifier | the from-scratch L2 is exported to ONNX and served through the real loader (drift 1.8e-7). The DeBERTa fine-tune now runs in CI but **did not learn** (dev hold-out accuracy 55.4%, recall 0; see below) |
+| Locked test split | **scored once**, in CI, on 2026-10-31 (`docs/results/locked-test.json`, ADR-0009). It is not to be re-run or tuned against |
+| LaTeX report | written (`report/main.tex`); compiled by the `report` job in `verify`, which uploads the PDF |
+
+### Locked test split (scored once)
+
+Run once in CI after training on the dev split only; no parameter was changed afterwards. Wilson 95% intervals.
+`test_iid`: 56 attacks, 53 benign. `test_ood`: 18 attacks (two held-out families).
+
+| Detector | iid attacks blocked | iid benign blocked | OOD attacks blocked |
+|---|---|---|---|
+| Cascade, lite L2 | 78.6% [66.2, 87.3] | 1.9% [0.3, 9.9] | 38.9% [20.3, 61.4] |
+| Cascade + scratch L2 | **98.2%** [90.5, 99.7] | 1.9% [0.3, 9.9] | **88.9%** [67.2, 96.9] |
+| Scratch L2 alone | 94.6% [85.4, 98.2] | 1.9% [0.3, 9.9] | 88.9% [67.2, 96.9] |
+| Cascade + DeBERTa L2 | 75.0% [62.3, 84.5] | 1.9% [0.3, 9.9] | 38.9% [20.3, 61.4] |
+| DeBERTa L2 alone | 0.0% [0.0, 6.4] | 0.0% [0.0, 6.8] | 0.0% [0.0, 17.6] |
+
+**The DeBERTa fine-tune failed.** On its dev hold-out it predicted the benign class for every input (accuracy
+55.4%, precision/recall/F1 0.0); its ONNX export then flagged all 53 benign messages and blocked no attack. The
+cause is not yet known; a label-order or export bug is a candidate. The locked result stands: retraining and
+re-scoring on the same data would invalidate the split. The corpus is small and synthetic, so these intervals are wide.
 
 ## Quick start
 
@@ -144,7 +163,7 @@ Docker · Helm · kind · Terraform · GitHub Actions · Trivy · Semgrep · git
 - The attack corpus and detector training data are both written for this project; out-of-distribution
   robustness needs public datasets and the locked test split (scored once, via `WARDEN_UNLOCK_TEST=1`).
 - OWASP coverage is partial and gaps are listed in [`docs/OWASP_MAPPING.md`](docs/OWASP_MAPPING.md).
-- See **Verification status** for what has and has not been executed (no live Kubernetes install, no `terraform validate`).
+- See **Verification status** for what has and has not been executed.
 - Warden inspects what reaches an MCP tool call; it cannot see reasoning that never produces one.
 
 ## Security & contributing

@@ -1,0 +1,12 @@
+{
+  "gated_utility_lost_points": 0.0,
+  "ungated_utility_lost_points": 0.0,
+  "ratio_ungated_to_gated": 1.0,
+  "harmful_promotions_gated": 0,
+  "harmful_promotions_ungated": 1,
+  "gate_failures_gated": 20,
+  "promoted_gated": 5,
+  "promoted_ungated": 20,
+  "H2_gate_cuts_harm_10x": true,
+  "note": "Results use the simulated victim agent (a pipeline stand-in, not a real LLM). H2's mechanism \u2014 the gate rejecting a candidate that would fire on benign traffic \u2014 is shown directly by gate_failures here and unit-tested in test_gate_blocks_benign_overblocker_at_g2; the magnitude of induced self-DoS depends on the attacker model and needs the real-LLM victim."
+}

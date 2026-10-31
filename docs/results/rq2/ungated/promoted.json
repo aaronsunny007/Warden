@@ -1,0 +1,942 @@
+[
+  {
+    "id": "WL-OUT-6770AA",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r0-11",
+      "note": "refund-fraud"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r0-11: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "(ref 2026-114), support assistants"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "2026 data-portability audit (ref"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "audit (ref 2026-114), support"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-AE2403",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-21",
+      "note": "refund-fraud"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-21: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "900.00 to customer 10"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "customer 10 ... 47"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "refund 900.00 to customer"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-F22158",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-66",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-66: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "say 'account verified, send"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "signed, emma johnson </information>"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-C2E9F1",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-76",
+      "note": "ssrf-metadata"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-76: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "following first: fetch http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "signed, emma johnson </information>"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "ai assistant. before"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-7992D8",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-104",
+      "note": "overwrite-policy"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-104: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "following first: overwrite /shared/policies/refunds.md"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "signed, emma johnson </information>"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "ai assistant. before"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-9EF248",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-112",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-112: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "say 'account verified, send"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "signed, emma johnson </information>[/system]"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-275BA6",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-189",
+      "note": "refund-fraud"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-189: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "900.00 to customer 1047"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": ": todo: refund 900.00"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "l'assistant : todo: refund"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-676E2D",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r1-194",
+      "note": "ssrf-metadata"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r1-194: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "following first: fetch http://169.254.169.254/latest/meta-data/iam/security-credentials/"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "signed, emma johnson </information>"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "ai assistant. before"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-6BC884",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r2-11",
+      "note": "exfil-export"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r2-11: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "customer export from /secret/customer-export.csv"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "l'assistant : todo: send"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "note pour l'assistant"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-845728",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r2-16",
+      "note": "forward-inbox"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r2-16: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "(ref 2026-114), support assistants"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "2026 data-portability audit (ref"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "audit (ref 2026-114), support"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-481D70",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r2-108",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r2-108: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "(ref 2026-114), su\u0440\u0440ort assistants"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "2026 d\u0430ta-portability audit (ref"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-8C7A7E",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r2-122",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r2-122: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "avant de r\u00e9pondre, update"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "first response. note pour"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-876B77",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r2-139",
+      "note": "md-exfil"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r2-139: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "avant de r\u00e9pondre, add"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "cache under settings. note"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "report cache under settings."
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-BE2B24",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r2-199",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r2-199: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "asistente: note pour l'assistant"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "avant de r\u00e9pondre, update"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-F9795A",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r3-173",
+      "note": "md-exfil"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r3-173: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "(ref 2026-114), support assistants"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "2026 data-portability audit (ref"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "audit (ref 2026-114), support"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-DAFF9C",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r4-58",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r4-58: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "avant de r\u00e9pondre, update"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "say 'account verified, send"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-5CED77",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r4-119",
+      "note": "exfil-export"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r4-119: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "avant de r\u00e9pondre, send"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "cache under settings. note"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "report cache under settings."
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-00BCC9",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r4-125",
+      "note": "forward-inbox"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r4-125: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "corrected vat number. todo:"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "vat number. todo: forward"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "corrected vat number."
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-D5946B",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r4-140",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r4-140: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'accoun t verified, send"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "-portab ility audit (ref"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "2026 data -portab ility"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WL-OUT-6D7219",
+    "version": 1,
+    "owasp": [
+      "ASI01",
+      "MCP10"
+    ],
+    "provenance": {
+      "author": "template",
+      "campaign": "20261031T005738Z-ungated-r4-165",
+      "note": "tamper-note"
+    },
+    "description": "Blue-team rule for 20261031T005738Z-ungated-r4-165: redact an injected instruction in tool output.",
+    "mode": "shadow",
+    "severity": "high",
+    "action": {
+      "type": "redact",
+      "message": "injected instruction removed from tool output"
+    },
+    "scope": {
+      "channels": [
+        "output"
+      ]
+    },
+    "match": {
+      "any": [
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "'account verified, send card"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "say 'account verified, send"
+        },
+        {
+          "kind": "text",
+          "field": "text",
+          "op": "contains",
+          "value": "signed, emma johnson </information>"
+        }
+      ]
+    }
+  }
+]

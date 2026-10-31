@@ -2,6 +2,24 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- `verify` workflow: Helm on a live `kind` cluster, `terraform fmt/init/validate`, DeBERTa L2 fine-tune, a
+  write-once locked-test scorer (`warden eval locked`), and a LaTeX report build.
+- Full LaTeX report (`report/main.tex`), with tables generated from `docs/results/*.json` by `report/make_tables.py`.
+- Loop results (simulated victim): `docs/results/loop-gated` (RQ3) and `docs/results/rq2`.
+
+### Results
+
+- `terraform validate` passes. The locked test split was scored once: cascade + scratch L2 blocks 98.2% of iid and
+  88.9% of OOD attacks at 1.9% benign block rate. The DeBERTa fine-tune did not learn (recall 0 on the dev hold-out).
+
+### Fixed
+
+- Dashboard image build (missing `public/` directory) and DeBERTa tokenizer dependencies in CI.
+
 ## [0.1.1] - 2026-10-28
 
 ### Fixed
