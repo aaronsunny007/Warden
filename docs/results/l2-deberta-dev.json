@@ -1,5 +1,5 @@
 {
-  "note": "DEV hold-out only (56 examples, stratified slice of the dev split). NOT the locked test split. Copied from the CI log of l2-dev run 41167437547 (torch 2.8.0, transformers 4.56.2).",
+  "note": "DEV hold-out only (56 examples, stratified slice of the dev split). NOT the locked test split. From the CI logs of l2-dev runs 41167437547 (torch/transformers installed over the lock) and 41169668948 (lockfile only: torch 2.8.0, transformers 4.56.2); both gave identical hold-out metrics.",
   "base_model": "microsoft/deberta-v3-xsmall",
   "epochs": 6,
   "lr": 5e-05,
@@ -18,5 +18,5 @@
     "f1": 0.9796,
     "fpr": 0.0
   },
-  "max_torch_vs_served_drift": 5.07e-07
+  "max_torch_vs_served_drift": 1.07e-06
 }
