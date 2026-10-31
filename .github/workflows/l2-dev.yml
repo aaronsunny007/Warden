@@ -36,7 +36,7 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
           TOKENIZERS_PARALLELISM: 'false'
-        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2
+        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2 --detect-anomaly
       - name: Metrics
         if: always()
         run: cat ../models/l2-deberta-v2/metrics.json || true
