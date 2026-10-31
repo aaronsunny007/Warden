@@ -18,7 +18,7 @@ permissions:
 jobs:
   deberta-dev:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: python
@@ -33,7 +33,10 @@ jobs:
           uv sync --frozen --group dev --extra agents --extra ml --extra train
           uv pip install onnxscript sentencepiece protobuf tiktoken
       - name: Fine-tune on dev, check parity, export
-        run: uv run --no-sync python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2
+        env:
+          PYTHONUNBUFFERED: '1'
+          TOKENIZERS_PARALLELISM: 'false'
+        run: uv run --no-sync python -u ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2
       - name: Metrics
         if: always()
         run: cat ../models/l2-deberta-v2/metrics.json || true
