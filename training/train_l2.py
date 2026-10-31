@@ -20,8 +20,10 @@ Then point the detector at it:
 from __future__ import annotations
 
 import argparse
+import faulthandler
 import json
 import sys
+import time
 from pathlib import Path
 
 LABELS = ["benign", "injection"]  # index 1 ("injection") is the "bad" class the cascade reads.
@@ -69,6 +71,8 @@ def main() -> int:
     ap.add_argument("--min-f1", type=float, default=0.5, help="refuse to export a model below this dev F1")
     ap.add_argument("--max-drift", type=float, default=1e-2, help="max torch-vs-served probability drift")
     a = ap.parse_args()
+    # If a step ever stalls, dump every thread's stack to stderr every 4 minutes instead of hanging silently.
+    faulthandler.dump_traceback_later(240, repeat=True)
 
     try:
         import torch
@@ -132,6 +136,7 @@ def main() -> int:
         opt, lambda i: min(1.0, (i + 1) / max(1, steps // 10)) * max(0.0, 1 - i / steps)
     )
     step = 0
+    t0 = time.monotonic()
     for epoch in range(int(a.epochs) + 1):
         model.train()
         losses: list[float] = []
@@ -147,6 +152,8 @@ def main() -> int:
             sched.step()
             losses.append(out.loss.item())
             step += 1
+            if step % 5 == 0 or step == 1:
+                print(f"  step {step}/{steps} loss {losses[-1]:.4f} t={time.monotonic() - t0:.0f}s")
         if losses:
             ev = _metrics(y_val, [int(p >= 0.5) for p in predict(x_val)])
             print(
