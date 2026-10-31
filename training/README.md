@@ -5,6 +5,13 @@ ONNX bundle the detection cascade loads (`model.onnx`, `tokenizer.json`, `labels
 middle of the cascade — **L0 rules → L1 embedding kNN → L2 classifier → L3 LLM judge**. A stronger
 L2 lowers how often the expensive L3 judge is consulted; it does not replace the other layers.
 
+## Pinned versions
+
+Fine-tuning DeBERTa-v3 diverged to NaN under torch 2.15 / transformers 5.21 (CI, CPU) and trains normally under
+torch 2.8.0 / transformers 4.56.2, which `python/pyproject.toml` now constrains for the `train` extra
+(`torch<2.9`, `transformers<4.57`). The trainer stops on a non-finite loss or gradient norm, checks the served ONNX
+bundle against torch, and exits non-zero rather than export a model below `--min-f1`.
+
 ## Honesty / leakage
 
 - Training uses **only the dev split**. The `test_iid` / `test_ood` splits stay locked by

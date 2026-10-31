@@ -21,7 +21,8 @@ them as properties of the defence pipeline, not as estimates of real-world risk
 (Section~\ref{sec:limits}). On the locked test split, scored once, the cascade with a from-scratch
 classifier blocks 98.2\% of in-distribution attacks (Wilson 95\% CI 90.5--99.7) and 88.9\% of
 out-of-distribution attacks (67.2--96.9) at a 1.9\% benign block rate. A fine-tuned DeBERTa
-classifier \emph{failed to train} and is reported as a negative result.
+classifier \emph{diverged during training} in the locked run, so its locked row is a broken model;
+a corrected configuration reaches F1~0.98 on the development hold-out only.
 \end{abstract}
 
 \section{Introduction}
@@ -143,17 +144,24 @@ classifier is doing most of the work. The intervals are wide: with 18 OOD attack
 67.2\%, and the corpus is small and synthetic, so these numbers say the approach is viable, not that
 it will hold on real traffic.
 
-\sidebar{The DeBERTa fine-tune did not train.} Fine-tuning
+\sidebar{The DeBERTa row is a broken model, not a measurement of DeBERTa.} Fine-tuning
 \texttt{microsoft/deberta-v3-xsmall} on the 222-example training slice for three epochs gave a
-validation accuracy of 55.4\% with precision, recall and F1 all exactly 0.0: on the held-out
-development slice it predicted the benign class for every input. On the locked split its ONNX export
-behaves differently, flagging all 53 benign messages and blocking none of the attacks, so it is
-useless as a classifier either way. We have not found the cause. Candidate explanations are a
-learning rate or schedule unsuited to 222 examples, and a label-order or output-mapping error in the
-export; the two different failure modes on the same weights make an export or scoring-path bug
-worth checking. The locked result for this model stands and we have not retrained it against the
-locked data: doing so would invalidate the split. A corrected run would have to be reported as a new
-experiment on newly collected test data.
+validation accuracy of 55.4\% with precision, recall and F1 all exactly 0.0: it predicted the benign
+class for every held-out development input. On the locked split its ONNX export flagged all 53
+benign messages and blocked none of the attacks. We first suspected under-training or an export bug.
+Later diagnostic runs showed otherwise: under the lockfile's PyTorch~2.15 and transformers~5.21 the
+training diverges to NaN (in four diagnostic runs the loss or gradient norm was non-finite within the
+first five steps, and anomaly detection reported \texttt{LogSoftmaxBackward0} returning NaN on the first
+backward pass; steps also took over a minute each). A NaN model predicts class~0 for
+every input, which matches the development result, and NaN scores at serving time read as
+``not benign'', which matches the locked result. We did not isolate whether PyTorch or transformers
+is responsible. With PyTorch~2.8.0 and transformers~4.56.2, now pinned in the \texttt{train} extra,
+the same recipe (six epochs, learning rate $5\times10^{-5}$, 96 tokens) trains normally: on the
+56-example development hold-out it reaches accuracy 98.2\%, precision 100\%, recall 96\% and F1~0.98,
+and the served ONNX bundle matches PyTorch to $5\times10^{-7}$. \textbf{That model has not been
+scored on the locked split.} The split was spent on the first run, and scoring the corrected model
+on it would invalidate the split; a locked-split result for DeBERTa needs newly collected test data.
+The locked row above therefore stands as the result for a model that had diverged.
 
 \sidebar{Not yet established.} The L3 LLM judge was not run for the locked split (\texttt{judge:
 false}) and no external embedding model was configured, so the table measures the cascade without L3.
@@ -202,7 +210,7 @@ from the attacker running out of new mutations.
   \item \textbf{Simulated victim.} RQ1--RQ3 do not use a real language model. They show the pipeline behaves as designed; they do not estimate real attack success.
   \item \textbf{Small synthetic corpus} written for this project. The test splits hold 109 in-distribution and 18 out-of-distribution messages, so intervals are wide, and synthetic text is easier than real traffic.
   \item \textbf{One locked run, several variants.} Six detector variants were scored on the same locked data in a single pass. They are not corrected for multiple comparison, and the locked data cannot be reused.
-  \item \textbf{DeBERTa failed;} no fine-tuned transformer result is available.
+  \item \textbf{No locked-split result for a working DeBERTa.} The locked DeBERTa row is a diverged model; the corrected one is evaluated on a 56-example development hold-out only.
   \item \textbf{RQ2 magnitude is unmeasured} (13-task benign set, one seed).
   \item \textbf{Partial OWASP coverage}, with gaps listed in \texttt{docs/OWASP\_MAPPING.md}; no evaluation on public benchmark runs.
   \item \textbf{Scope.} Warden sees what reaches an MCP tool call; it cannot see reasoning that never produces one.

@@ -14,10 +14,11 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 ### Results
 
 - `terraform validate` passes and the Helm chart installs on `kind` and answers its smoke tests. The locked test split was scored once: cascade + scratch L2 blocks 98.2% of iid and
-  88.9% of OOD attacks at 1.9% benign block rate. The DeBERTa fine-tune did not learn (recall 0 on the dev hold-out).
+  88.9% of OOD attacks at 1.9% benign block rate. The first DeBERTa run diverged to NaN (torch 2.15 / transformers 5.21); its locked row measures a broken model.
 
 ### Fixed
 
+- **DeBERTa training** diverged to NaN on the lockfile's torch 2.15 / transformers 5.21; the `train` extra is now constrained to `torch<2.9` and `transformers<4.57` (locked at 2.8.0 / 4.56.2), where it trains (dev hold-out F1 0.98; dev only, not locked-split). `training/train_l2.py` now logs a per-epoch curve, checks the served ONNX against torch, and refuses to export a degenerate model.
 - **Helm chart deadlock** found by the first live `kind` install: the migration was a `post-install` hook, but `helm install --wait` waits for pod readiness first and the pods wait for the schema. It is now a regular Job named per release revision.
 - Dashboard image build (missing `public/` directory) and DeBERTa tokenizer dependencies in CI.
 

@@ -68,8 +68,9 @@ Trade-off: less data to tune on; the right call for honest numbers.
 
 **Record (2026-10-31).** The split was scored once, by the `verify` workflow, after the classifiers were
 trained on dev only. Result: `docs/results/locked-test.json`. The scorer refuses to overwrite its output and the
-workflow skips the whole job when that file exists. The fine-tuned DeBERTa L2 failed to train (see the README); we
-did not retrain it against this data. Any corrected model must be evaluated on newly collected test data.
+workflow skips the whole job when that file exists. The DeBERTa L2 in that run had diverged to NaN (torch 2.15 / transformers 5.21; see the README), so its locked row
+measures a broken model. A corrected model (torch 2.8 / transformers 4.56) trains, but we did not score it against this
+data. It must be evaluated on newly collected test data.
 
 ## ADR-0008 — Approvals bound to the rule's canonical hash *including mode*
 
