@@ -37,8 +37,9 @@ Common overrides:
 - The gateway runs an init container that generates a dev Ed25519 signing key into an `emptyDir`
   and signs the baseline ruleset in **shadow mode** — no key material is committed or baked into
   an image. Promoting a rule to enforce still goes through the control plane's G8 approval.
-- A `post-install`/`post-upgrade` hook Job runs the Alembic migration; the detector, control and
-  gateway pods wait on an init container until the schema exists.
+- A regular Job (named per release revision) runs the Alembic migration; the detector, control and
+  gateway pods wait on an init container until the schema exists. It is deliberately not a Helm hook:
+  `helm install --wait` waits for pod readiness before post-install hooks run, which would deadlock.
 - The default resource requests/limits are sized for a laptop cluster. Raise them for real load.
 
 > The chart was authored to Helm conventions; `helm lint`/`helm template` were not run in the

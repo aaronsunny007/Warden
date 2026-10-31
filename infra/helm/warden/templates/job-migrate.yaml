@@ -1,13 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "warden.fullname" . }}-migrate
+  # A regular Job, not a Helm hook: `helm install --wait` waits for every pod to be ready before it runs
+  # post-install hooks, and the gateway/control-plane pods wait for the schema this Job creates, so a hook
+  # would deadlock. The revision in the name gives each upgrade a fresh Job (a Job's spec is immutable);
+  # Helm prunes the previous one. It retries until postgres accepts connections.
+  name: {{ include "warden.fullname" . }}-migrate-{{ .Release.Revision }}
   labels: {{- include "warden.labels" . | nindent 4 }}
-  annotations:
-    # Run after the main resources (so postgres exists), on every install and upgrade.
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "-5"
-    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   backoffLimit: 10
   template:
