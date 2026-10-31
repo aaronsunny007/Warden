@@ -59,13 +59,15 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="microsoft/deberta-v3-xsmall", help="HF base model to fine-tune")
     ap.add_argument("--out", default="models/l2-onnx", help="output directory for the ONNX bundle")
-    ap.add_argument("--epochs", type=float, default=3.0)
+    ap.add_argument("--epochs", type=float, default=10.0)
     ap.add_argument("--batch-size", type=int, default=16)
-    ap.add_argument("--lr", type=float, default=2e-5)
+    ap.add_argument("--lr", type=float, default=5e-5)
     ap.add_argument("--max-len", type=int, default=256)
     ap.add_argument("--val-frac", type=float, default=0.2)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--opset", type=int, default=17)
+    ap.add_argument("--min-f1", type=float, default=0.5, help="refuse to export a model below this dev F1")
+    ap.add_argument("--max-drift", type=float, default=1e-2, help="max torch-vs-served probability drift")
     a = ap.parse_args()
 
     try:
@@ -108,13 +110,31 @@ def main() -> int:
             item["labels"] = torch.tensor(self.ys[i])
             return item
 
-    train_dl = DataLoader(DS(x_tr, y_tr), batch_size=a.batch_size, shuffle=True)
+    from warden.detector.text import normalize  # the serving path normalises, so train on the same text
+
+    train_dl = DataLoader(DS([normalize(t) for t in x_tr], y_tr), batch_size=a.batch_size, shuffle=True)
     opt = torch.optim.AdamW(model.parameters(), lr=a.lr)
 
+    def predict(texts: list[str]) -> list[float]:
+        """P(injection) from the torch model, on the same normalised text the served path sees."""
+        model.eval()
+        probs: list[float] = []
+        with torch.no_grad():
+            for i in range(0, len(texts), a.batch_size):
+                chunk = [normalize(t) for t in texts[i : i + a.batch_size]]
+                enc = tok(chunk, truncation=True, max_length=a.max_len, padding=True, return_tensors="pt")
+                enc = {k: v.to(device) for k, v in enc.items()}
+                probs.extend(torch.softmax(model(**enc).logits, dim=-1)[:, 1].cpu().tolist())
+        return probs
+
     steps = max(1, int(a.epochs * len(train_dl)))
-    model.train()
+    sched = torch.optim.lr_scheduler.LambdaLR(
+        opt, lambda i: min(1.0, (i + 1) / max(1, steps // 10)) * max(0.0, 1 - i / steps)
+    )
     step = 0
-    for _epoch in range(int(a.epochs) + 1):
+    for epoch in range(int(a.epochs) + 1):
+        model.train()
+        losses: list[float] = []
         for batch in train_dl:
             if step >= steps:
                 break
@@ -122,21 +142,21 @@ def main() -> int:
             opt.zero_grad()
             out = model(**batch)
             out.loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
-            if step % 20 == 0:
-                print(f"  step {step}/{steps} loss={out.loss.item():.4f}")
+            sched.step()
+            losses.append(out.loss.item())
             step += 1
+        if losses:
+            ev = _metrics(y_val, [int(p >= 0.5) for p in predict(x_val)])
+            print(
+                f"epoch {epoch}: train loss {sum(losses) / len(losses):.4f}  "
+                f"dev-holdout acc {ev['accuracy']:.3f} f1 {ev['f1']:.3f}"
+            )
 
     # Held-out validation (dev slice only; the locked test set is scored later by the harness).
-    model.eval()
-    preds: list[int] = []
-    with torch.no_grad():
-        for i in range(0, len(x_val), a.batch_size):
-            chunk = x_val[i : i + a.batch_size]
-            enc = tok(chunk, truncation=True, max_length=a.max_len, padding=True, return_tensors="pt")
-            enc = {k: v.to(device) for k, v in enc.items()}
-            logits = model(**enc).logits
-            preds.extend(logits.argmax(-1).cpu().tolist())
+    val_probs = predict(x_val)
+    preds = [int(p >= 0.5) for p in val_probs]
     m = _metrics(y_val, preds)
     print("validation (dev hold-out): " + json.dumps({k: round(v, 4) for k, v in m.items()}))
 
@@ -174,6 +194,26 @@ def main() -> int:
         print("onnx.checker: model is well-formed")
     except ImportError:
         pass
+    # Parity: the served bundle (onnxruntime + tokenizer.json, as the gateway loads it) must agree with torch.
+    from warden.detector.classifier import OnnxClassifier
+
+    served = OnnxClassifier(str(out_dir), max_len=a.max_len).score(x_val)
+    drift = max(abs(float(x) - float(y)) for x, y in zip(served, val_probs, strict=True))
+    served_m = _metrics(y_val, [int(p >= 0.5) for p in served])
+    print(f"served-vs-torch max probability drift {drift:.2e}; served dev-holdout " + json.dumps(
+        {k: round(v, 4) for k, v in served_m.items()}))
+    (out_dir / "metrics.json").write_text(
+        json.dumps(
+            {"base_model": a.model, "val": m, "served_val": served_m, "max_torch_vs_served_drift": drift,
+             "epochs": a.epochs, "lr": a.lr}, indent=2)
+    )
+    if m["f1"] < a.min_f1 or served_m["f1"] < a.min_f1 or drift > a.max_drift:
+        print(
+            f"REFUSING: dev F1 {m['f1']:.3f} / served F1 {served_m['f1']:.3f} / drift {drift:.2e} "
+            f"(need F1 >= {a.min_f1}, drift <= {a.max_drift}); the bundle in {out_dir} is not usable",
+            file=sys.stderr,
+        )
+        return 1
     print(f"wrote {out_dir}/ (model.onnx, tokenizer.json, labels.json, metrics.json)")
     print("point the detector at it: WARDEN_L2_MODE=onnx WARDEN_L2_ONNX_DIR=" + str(out_dir.resolve()))
     return 0

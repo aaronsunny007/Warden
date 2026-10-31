@@ -1,0 +1,39 @@
+name: l2-dev
+
+# Dev-split-only retrain of the DeBERTa L2 with the corrected trainer (per-epoch curve, torch-vs-served
+# parity, refuses degenerate models). It never touches the locked test split: the locked result in
+# docs/results/locked-test.json stands for the first DeBERTa run, and a corrected model needs new test data.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deberta-dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv python install 3.12
+      - name: Install
+        run: |
+          uv sync --frozen --group dev --extra agents --extra ml --extra train
+          uv pip install onnxscript sentencepiece protobuf tiktoken
+      - name: Fine-tune on dev, check parity, export
+        run: uv run --no-sync python ../training/train_l2.py --model microsoft/deberta-v3-xsmall --out ../models/l2-deberta-v2
+      - name: Metrics
+        if: always()
+        run: cat ../models/l2-deberta-v2/metrics.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: l2-deberta-v2
+          path: models/l2-deberta-v2/
