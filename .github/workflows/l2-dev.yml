@@ -6,6 +6,11 @@ name: l2-dev
 
 on:
   workflow_dispatch:
+  push:
+    branches: ['ccr-*']
+    paths:
+      - '.github/workflows/l2-dev.yml'
+      - 'training/train_l2.py'
 
 permissions:
   contents: read
