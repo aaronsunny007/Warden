@@ -99,6 +99,8 @@ def main() -> int:
         label2id={name: i for i, name in enumerate(LABELS)},
     )
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.set_flush_denormal(True)  # denormal float32 math can slow CPU backward passes by orders of magnitude
+    print(f"device={device} torch_threads={torch.get_num_threads()} lr={a.lr} epochs={a.epochs}")
     model.to(device)
 
     class DS(Dataset):  # type: ignore[misc]
@@ -150,6 +152,11 @@ def main() -> int:
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             opt.step()
             sched.step()
+            if not torch.isfinite(out.loss):
+                raise SystemExit(
+                    f"non-finite loss at step {step + 1}: stopping. batch attention-mask row sums "
+                    f"min={int(batch['attention_mask'].sum(-1).min())} max={int(batch['attention_mask'].sum(-1).max())}"
+                )
             losses.append(out.loss.item())
             step += 1
             if step % 5 == 0 or step == 1:
