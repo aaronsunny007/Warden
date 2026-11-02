@@ -76,7 +76,7 @@ against unseen attacks. The confirmatory runs are the locked test split and a re
 | Docker images and `docker compose up` | built and run: every service healthy, demo traffic and a replayed attack recorded in the gateway and Postgres |
 | Helm chart | `helm lint`/`helm template` pass for four option sets, and the chart installs on a live `kind` cluster in CI (`helm install --wait`, then gateway and dashboard smoke-tested through port-forward). The first real install found a deadlock (migration as a post-install hook) that is now fixed |
 | Terraform | `fmt -check`, `init` and `validate` pass on a GitHub Actions runner (`verify` workflow) |
-| L2 classifier | the from-scratch L2 is exported to ONNX and served through the real loader (drift 1.8e-7). The first DeBERTa run diverged to NaN under the lockfile's torch 2.15 / transformers 5.21; with torch 2.8 / transformers 4.56 (now pinned) it trains: dev hold-out F1 0.98, served ONNX matches torch to 5e-7 (`docs/results/l2-deberta-dev.json`; **dev only, not the locked split**) |
+| L2 classifier | the from-scratch L2 is exported to ONNX and served through the real loader (drift 1.8e-7). The first DeBERTa run diverged to NaN under the lockfile's torch 2.15 / transformers 5.21; with torch 2.8 / transformers 4.56 (now pinned) it trains: dev hold-out F1 0.98, served ONNX matches torch to 1.1e-6 (`docs/results/l2-deberta-dev.json`; **dev only, not the locked split**) |
 | Locked test split | **scored once**, in CI, on 2026-10-31 (`docs/results/locked-test.json`, ADR-0009). It is not to be re-run or tuned against |
 | LaTeX report | written (`report/main.tex`); compiled by the `report` job in `verify`, which uploads the PDF |
 

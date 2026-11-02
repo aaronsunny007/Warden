@@ -158,7 +158,7 @@ every input, which matches the development result, and NaN scores at serving tim
 is responsible. With PyTorch~2.8.0 and transformers~4.56.2, now pinned in the \texttt{train} extra,
 the same recipe (six epochs, learning rate $5\times10^{-5}$, 96 tokens) trains normally: on the
 56-example development hold-out it reaches accuracy 98.2\%, precision 100\%, recall 96\% and F1~0.98,
-and the served ONNX bundle matches PyTorch to $5\times10^{-7}$. \textbf{That model has not been
+and the served ONNX bundle matches PyTorch to $1.1\times10^{-6}$. \textbf{That model has not been
 scored on the locked split.} The split was spent on the first run, and scoring the corrected model
 on it would invalidate the split; a locked-split result for DeBERTa needs newly collected test data.
 The locked row above therefore stands as the result for a model that had diverged.
