@@ -16,7 +16,7 @@ OUT = Path(__file__).resolve().parent / "tables"
 
 def pct(m: dict) -> str:
     lo, hi = m["ci95"]
-    return f"{m['hits']}/{m['n']} = {m['rate'] * 100:.1f}\\% [{lo * 100:.1f}, {hi * 100:.1f}]"
+    return f"{m['hits']}/{m['n']} = {m['rate'] * 100:.1f}\\%\\newline[{lo * 100:.1f}, {hi * 100:.1f}]"
 
 
 def locked() -> None:
@@ -33,7 +33,8 @@ def locked() -> None:
         "l2_only+scratch": "Scratch L2 alone",
     }
     rows = [
-        "\\begin{tabular}{lllll}\\toprule",
+        # X columns wrap, so the table fits the text width; each cell breaks before its CI
+        "\\begin{tabularx}{\\linewidth}{l*{4}{>{\\raggedright\\arraybackslash}X}}\\toprule",
         "Variant & iid attacks blocked & iid benign blocked & iid benign flagged & OOD attacks blocked \\\\\\midrule",
     ]
     for key, label in names.items():
@@ -44,7 +45,7 @@ def locked() -> None:
             f"{label} & {pct(iid['attack_blocked'])} & {pct(iid['benign_blocked'])} & "
             f"{pct(iid['benign_flagged'])} & {pct(ood['attack_blocked'])} \\\\"
         )
-    rows.append("\\bottomrule\\end{tabular}")
+    rows.append("\\bottomrule\\end{tabularx}")
     (OUT / "locked.tex").write_text("\n".join(rows) + "\n")
 
 
