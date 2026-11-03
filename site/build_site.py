@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import html
 import json
+import posixpath
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -17,6 +19,7 @@ from pathlib import Path
 import markdown
 
 ROOT = Path(__file__).resolve().parent.parent
+REPO = "https://github.com/aaronsunny007/Warden"
 PAGES = [
     ("README.md", "index-readme", "Overview"),
     ("docs/DESIGN.md", "design", "Design"),
@@ -57,13 +60,13 @@ def locked_summary() -> str:
     src = ROOT / "docs/results/locked-test.json"
     if not src.exists():
         return "<p>The locked test split has not been scored yet.</p>"
-    d = json.loads(src.read_text())
+    d = json.loads(src.read_text(encoding="utf-8"))
     names = {
         "cascade_full": "Cascade, lite L2",
         "cascade_full+scratch": "Cascade + scratch L2",
         "l2_only+scratch": "Scratch L2 alone",
-        "cascade_full+deberta": "Cascade + DeBERTa L2",
-        "l2_only+deberta": "DeBERTa L2 alone",
+        "cascade_full+deberta": "Cascade + DeBERTa L2 (diverged model)",
+        "l2_only+deberta": "DeBERTa L2 alone (diverged model)",
     }
 
     def cell(m: dict) -> str:
@@ -83,6 +86,16 @@ def locked_summary() -> str:
     )
 
 
+def repo_links(text: str, src: str) -> str:
+    """Other repo files are not on the site: point their links at GitHub."""
+
+    def link(m: re.Match[str]) -> str:
+        path = posixpath.normpath((Path(src).parent / m.group(1).split("#")[0]).as_posix())
+        return f"]({REPO}/blob/HEAD/{path})"
+
+    return re.sub(r"\]\((?!https?:|mailto:|#|/|[\w-]+\.html)([^)\s]+)\)", link, text)
+
+
 def main() -> int:
     out = Path(sys.argv[1])
     pdf = Path(sys.argv[2]) if len(sys.argv) > 2 else None
@@ -94,11 +107,12 @@ def main() -> int:
         shutil.copy(pdf, out / "warden-report.pdf")
         nav += '<a href="warden-report.pdf">Report (PDF)</a>'
     for src, slug, label in PAGES:
-        text = (ROOT / src).read_text()
+        text = (ROOT / src).read_text(encoding="utf-8")
         for s_, slug_, _ in PAGES:  # point links between the rendered pages at the site's own files
             text = text.replace(f"]({s_})", f"]({slug_}.html)").replace(f"]({s_.split('/')[-1]})", f"]({slug_}.html)")
+        text = repo_links(text, src)
         body = markdown.markdown(text, extensions=["tables", "fenced_code"])
-        (out / f"{slug}.html").write_text(shell(label, body, nav))
+        (out / f"{slug}.html").write_text(shell(label, body, nav), encoding="utf-8")
     home = (
         "<h1>Warden</h1><p>A validation-gated, self-improving security gateway between AI agents and MCP tool "
         "servers.</p><ul><li><a href=\"warden-report.pdf\">The report (PDF)</a></li>"
@@ -108,8 +122,8 @@ def main() -> int:
         '<li><a href="https://github.com/aaronsunny007/Warden">Source on GitHub</a></li></ul>'
         + locked_summary()
     )
-    (out / "index.html").write_text(shell("Warden", home, nav))
-    (out / ".nojekyll").write_text("")
+    (out / "index.html").write_text(shell("Warden", home, nav), encoding="utf-8")
+    (out / ".nojekyll").write_text("", encoding="utf-8")
     return 0
 
 

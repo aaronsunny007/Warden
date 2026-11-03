@@ -111,8 +111,11 @@ export async function createGateway(cfg: GatewayConfig, overrides: GatewayOverri
     });
   });
 
-  if (cfg.admin.enabled)
+  if (cfg.admin.enabled) {
+    if (!cfg.admin.token)
+      app.log.warn('admin API has no token (WARDEN_ADMIN_TOKEN): anyone who can reach this port can use it');
     await registerAdmin(app, { token: cfg.admin.token, core, catalog, policies, bus, metrics });
+  }
 
   // Push tool-list changes to subscribed agents.
   upstreams.onToolsChanged(() => {

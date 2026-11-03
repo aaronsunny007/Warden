@@ -39,6 +39,20 @@ See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full trust model.
 No secrets are committed to this repository. Signing keys are generated at runtime into volumes;
 admin tokens come from the environment. CI runs gitleaks, Semgrep and Trivy on every push.
 
+## Deployment hardening
+
+These are properties of the reference deployment, not bugs, but they matter before you expose it:
+
+- **The admin API is open when no token is set.** `WARDEN_ADMIN_TOKEN` is empty by default in the
+  compose file and the Helm chart; the gateway logs a warning at start. Set a token, and do not publish
+  the admin port.
+- **The control plane (`/v1/candidates/*/approve`) and the detector service have no authentication.**
+  G8 approval is only as strong as network access to the control plane, and `approvedBy` is
+  caller-supplied. Keep both on a private network.
+- **The dashboard proxies `/admin` and `/control` without adding credentials.** Setting
+  `NEXT_PUBLIC_ADMIN_TOKEN` would ship the token to every browser, so the dashboard should only be
+  reachable by operators.
+
 ## Responsible use
 
 Use the learning loop and red-team tooling against the bundled lab only. Do not point them at

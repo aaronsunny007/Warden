@@ -6,7 +6,8 @@ name: pages
 on:
   workflow_dispatch:
   push:
-    branches: [main, 'ccr-*', 'claude/**']
+    # the default branch only; feature branches can still be published by hand via workflow_dispatch
+    branches: [main, claude/clever-ptolemy-maj4nm]
     paths:
       - '.github/workflows/pages.yml'
       - 'site/**'
