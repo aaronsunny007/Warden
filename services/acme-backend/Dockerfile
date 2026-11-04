@@ -1,6 +1,6 @@
 # Acme Support backend (Spring Boot, Java 21). Build from this directory:
 #   docker build -t warden/acme-backend:dev services/acme-backend
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /src
 # Resolve dependencies first for layer caching.
 COPY pom.xml .
