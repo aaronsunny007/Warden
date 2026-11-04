@@ -43,15 +43,16 @@ admin tokens come from the environment. CI runs gitleaks, Semgrep and Trivy on e
 
 These are properties of the reference deployment, not bugs, but they matter before you expose it:
 
-- **The admin API is open when no token is set.** `WARDEN_ADMIN_TOKEN` is empty by default in the
-  compose file and the Helm chart; the gateway logs a warning at start. Set a token, and do not publish
-  the admin port.
-- **The control plane (`/v1/candidates/*/approve`) and the detector service have no authentication.**
-  G8 approval is only as strong as network access to the control plane, and `approvedBy` is
-  caller-supplied. Keep both on a private network.
-- **The dashboard proxies `/admin` and `/control` without adding credentials.** Setting
-  `NEXT_PUBLIC_ADMIN_TOKEN` would ship the token to every browser, so the dashboard should only be
-  reachable by operators.
+- **The admin API and the control plane are open when no token is set.** `WARDEN_ADMIN_TOKEN` is empty by
+  default in the compose file and the Helm chart (compose and Helm pass the same value to the control plane
+  as `WARDEN_CONTROL_TOKEN`). Both services log a warning at start when it is empty. Set a token, and do not
+  publish the admin or control ports. With a token, every control-plane `/v1` route, including
+  `.../approve`, needs `Authorization: Bearer <token>`; `approvedBy` is still caller-supplied text, not an
+  authenticated identity.
+- **The detector service has no authentication** apart from the optional corpus-write token. Keep it on a
+  private network; the gateway is its only client.
+- **The dashboard acts as the operator.** It adds the token to proxied calls on the server (`proxy.ts`), so
+  whoever can open the dashboard can approve rules. Put it behind your own login or a private network.
 
 ## Responsible use
 
