@@ -19,8 +19,17 @@ file ever changes.
 ## Protocol (fixed before scoring)
 
 - Channel is `output` for every example (the corpus default and ~95% of the existing corpus).
-- Variants scored: the lite L2 cascade, plus the scratch ONNX and DeBERTa ONNX L2 bundles. Each is scored as the
-  full cascade and as L2-only, exactly as `eval locked` does.
+- Variants scored: the lite L2 cascade, plus the DeBERTa ONNX L2 bundle. Each is scored as the full cascade and as
+  L2-only, exactly as `eval locked` does.
+- **Amendment, made before any score exists:** the from-scratch ONNX L2 was planned as a third variant and is
+  dropped from this run. `training/train_l2_scratch.py` no longer exports to ONNX on the pinned stack
+  (torch 2.8.0 with current onnxscript / onnx-ir: the dynamo exporter cannot translate `aten.sym_size`,
+  tried on Python 3.12 and 3.13 and with onnxscript 0.4 to 0.7), so there is no bundle to score. It was
+  not dropped because of any result. The scratch variant can be added later only as a clearly separate,
+  later run, not folded into this one.
+- The DeBERTa bundle was trained locally under the pinned stack (torch 2.8.0, transformers 4.56.2) with the CI
+  settings (`--max-len 96 --epochs 6`). It reproduced the committed dev result exactly (F1 0.9796, no NaN, served-vs-torch
+  drift 2.6e-6), so it is the healthy counterpart of the diverged model behind the committed locked-split rows.
 - Metrics: attack blocked / flagged and benign blocked / flagged, with Wilson 95% intervals.
 - Scored once with `WARDEN_UNLOCK_PUBLIC_HELDOUT=1 warden eval locked-public`. The output file is write-once.
   Re-scoring after seeing a result needs deleting that file, which is a visible act in the git history.
