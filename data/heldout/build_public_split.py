@@ -25,7 +25,9 @@ HERE = Path(__file__).parent
 
 
 def main() -> int:
-    raw = urllib.request.urlopen(URL, timeout=60).read()  # noqa: S310 (fixed https URL; sha256-verified below)
+    assert URL.startswith("https://")  # urllib would also open file://; URL is a module constant, never input
+    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
+    raw = urllib.request.urlopen(URL, timeout=60).read()
     got = hashlib.sha256(raw).hexdigest()
     if got != PARQUET_SHA256:
         print(f"source changed: sha256 {got} != pinned {PARQUET_SHA256}", file=sys.stderr)
