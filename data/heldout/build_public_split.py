@@ -18,16 +18,17 @@ from pathlib import Path
 import pandas as pd
 
 REVISION = "4f61ecb038e9c3fb77e21034b22511b523772cdd"
-FILE = "data/test-00000-of-00001-701d16158af87368.parquet"
 PARQUET_SHA256 = "39ac797cabc157eeed58435a08593b2952bb6cb16fc394a2d383f447cc7b246e"
-URL = f"https://huggingface.co/datasets/deepset/prompt-injections/resolve/{REVISION}/{FILE}"
 HERE = Path(__file__).parent
 
 
 def main() -> int:
-    assert URL.startswith("https://")  # urllib would also open file://; URL is a module constant, never input
-    # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
-    raw = urllib.request.urlopen(URL, timeout=60).read()
+    # A literal https URL (pinned revision and file): nothing dynamic reaches urllib.
+    raw = urllib.request.urlopen(
+        "https://huggingface.co/datasets/deepset/prompt-injections/resolve/"
+        "4f61ecb038e9c3fb77e21034b22511b523772cdd/data/test-00000-of-00001-701d16158af87368.parquet",
+        timeout=60,
+    ).read()
     got = hashlib.sha256(raw).hexdigest()
     if got != PARQUET_SHA256:
         print(f"source changed: sha256 {got} != pinned {PARQUET_SHA256}", file=sys.stderr)
