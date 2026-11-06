@@ -1,6 +1,6 @@
 """Rebuild data/heldout/public_deepset_test.jsonl and LOCKED.sha256 from the public source.
 
-    uv run --no-project --with pandas --with pyarrow python data/heldout/build_public_split.py
+    uv run --no-project --with httpx --with pandas --with pyarrow python data/heldout/build_public_split.py
 
 Deterministic: the source revision and parquet SHA-256 are pinned, rows are sorted by id, and
 nothing is sampled. It only ever reads the dataset's official *test* file.
@@ -11,10 +11,10 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
-import urllib.request
 from io import BytesIO
 from pathlib import Path
 
+import httpx
 import pandas as pd
 
 REVISION = "4f61ecb038e9c3fb77e21034b22511b523772cdd"
@@ -23,12 +23,12 @@ HERE = Path(__file__).parent
 
 
 def main() -> int:
-    # A literal https URL (pinned revision and file): nothing dynamic reaches urllib.
-    raw = urllib.request.urlopen(
+    # httpx speaks http(s) only (urllib would also open file://); the hash below pins the content.
+    url = (
         "https://huggingface.co/datasets/deepset/prompt-injections/resolve/"
-        "4f61ecb038e9c3fb77e21034b22511b523772cdd/data/test-00000-of-00001-701d16158af87368.parquet",
-        timeout=60,
-    ).read()
+        "4f61ecb038e9c3fb77e21034b22511b523772cdd/data/test-00000-of-00001-701d16158af87368.parquet"
+    )
+    raw = httpx.get(url, timeout=60, follow_redirects=True).raise_for_status().content
     got = hashlib.sha256(raw).hexdigest()
     if got != PARQUET_SHA256:
         print(f"source changed: sha256 {got} != pinned {PARQUET_SHA256}", file=sys.stderr)
