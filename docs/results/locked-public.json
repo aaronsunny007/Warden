@@ -1,0 +1,203 @@
+{
+  "split": "public_heldout (deepset/prompt-injections test, Apache-2.0)",
+  "n": 116,
+  "embedder": "",
+  "l2_mode": "lite",
+  "judge": false,
+  "cascade_full": {
+    "attack_blocked": {
+      "hits": 5,
+      "n": 60,
+      "rate": 0.0833,
+      "ci95": [
+        0.0361,
+        0.1807
+      ]
+    },
+    "attack_flagged": {
+      "hits": 27,
+      "n": 60,
+      "rate": 0.45,
+      "ci95": [
+        0.3309,
+        0.5751
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 56,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0642
+      ]
+    },
+    "benign_flagged": {
+      "hits": 7,
+      "n": 56,
+      "rate": 0.125,
+      "ci95": [
+        0.0619,
+        0.2363
+      ]
+    },
+    "attack_flagged_by_family": {
+      "public_prompt_injection": {
+        "hits": 27,
+        "n": 60,
+        "rate": 0.45,
+        "ci95": [
+          0.3309,
+          0.5751
+        ]
+      }
+    }
+  },
+  "l2_only": {
+    "attack_blocked": {
+      "hits": 0,
+      "n": 60,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0602
+      ]
+    },
+    "attack_flagged": {
+      "hits": 27,
+      "n": 60,
+      "rate": 0.45,
+      "ci95": [
+        0.3309,
+        0.5751
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 56,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0642
+      ]
+    },
+    "benign_flagged": {
+      "hits": 7,
+      "n": 56,
+      "rate": 0.125,
+      "ci95": [
+        0.0619,
+        0.2363
+      ]
+    },
+    "attack_flagged_by_family": {
+      "public_prompt_injection": {
+        "hits": 27,
+        "n": 60,
+        "rate": 0.45,
+        "ci95": [
+          0.3309,
+          0.5751
+        ]
+      }
+    }
+  },
+  "cascade_full+deberta": {
+    "attack_blocked": {
+      "hits": 5,
+      "n": 60,
+      "rate": 0.0833,
+      "ci95": [
+        0.0361,
+        0.1807
+      ]
+    },
+    "attack_flagged": {
+      "hits": 12,
+      "n": 60,
+      "rate": 0.2,
+      "ci95": [
+        0.1183,
+        0.3178
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 56,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0642
+      ]
+    },
+    "benign_flagged": {
+      "hits": 0,
+      "n": 56,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0642
+      ]
+    },
+    "attack_flagged_by_family": {
+      "public_prompt_injection": {
+        "hits": 12,
+        "n": 60,
+        "rate": 0.2,
+        "ci95": [
+          0.1183,
+          0.3178
+        ]
+      }
+    }
+  },
+  "l2_only+deberta": {
+    "attack_blocked": {
+      "hits": 0,
+      "n": 60,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0602
+      ]
+    },
+    "attack_flagged": {
+      "hits": 9,
+      "n": 60,
+      "rate": 0.15,
+      "ci95": [
+        0.081,
+        0.2611
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 56,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0642
+      ]
+    },
+    "benign_flagged": {
+      "hits": 0,
+      "n": 56,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0642
+      ]
+    },
+    "attack_flagged_by_family": {
+      "public_prompt_injection": {
+        "hits": 9,
+        "n": 60,
+        "rate": 0.15,
+        "ci95": [
+          0.081,
+          0.2611
+        ]
+      }
+    }
+  }
+}

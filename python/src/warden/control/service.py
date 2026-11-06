@@ -9,11 +9,13 @@ assembles and signs bundles the gateway then verifies.
 
 from __future__ import annotations
 
+import hmac
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import func, select
 
@@ -21,6 +23,8 @@ from warden import __version__, policy_cli
 from warden.db.models import Campaign, Candidate, Defence, GateReport
 from warden.db.session import session_factory
 from warden.settings import Settings, get_settings
+
+log = logging.getLogger(__name__)
 
 
 class ApproveRequest(BaseModel):
@@ -38,12 +42,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     s = settings or get_settings()
     sf = session_factory(s.database_url)
     app = FastAPI(title="Warden control plane", version=__version__)
+    if not s.control_token:
+        log.warning(
+            "control plane has no token (WARDEN_CONTROL_TOKEN): anyone who can reach it can approve rules"
+        )
+
+    def require_token(authorization: str = Header(default="")) -> None:
+        if s.control_token and not hmac.compare_digest(
+            authorization.encode(), f"Bearer {s.control_token}".encode()
+        ):
+            raise HTTPException(401, "unauthorized")
+
+    auth = [Depends(require_token)]
 
     @app.get("/healthz")
     def healthz() -> dict[str, bool]:
         return {"ok": True}
 
-    @app.get("/v1/campaigns")
+    @app.get("/v1/campaigns", dependencies=auth)
     def campaigns(limit: int = 100, bypass_only: bool = False) -> list[dict[str, Any]]:
         with sf() as db:
             q = select(Campaign).order_by(Campaign.created_at.desc()).limit(min(limit, 1000))
@@ -63,7 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 for c in db.execute(q).scalars()
             ]
 
-    @app.get("/v1/candidates")
+    @app.get("/v1/candidates", dependencies=auth)
     def candidates(status: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         with sf() as db:
             q = select(Candidate).order_by(Candidate.created_at.desc()).limit(min(limit, 1000))
@@ -83,7 +99,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 for c in db.execute(q).scalars()
             ]
 
-    @app.get("/v1/candidates/{candidate_id}")
+    @app.get("/v1/candidates/{candidate_id}", dependencies=auth)
     def candidate(candidate_id: str) -> dict[str, Any]:
         with sf() as db:
             c = db.get(Candidate, candidate_id)
@@ -100,7 +116,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "report": report.report if report else None,
             }
 
-    @app.get("/v1/gate-reports/{report_id}")
+    @app.get("/v1/gate-reports/{report_id}", dependencies=auth)
     def gate_report(report_id: str) -> dict[str, Any]:
         with sf() as db:
             r = db.get(GateReport, report_id)
@@ -114,7 +130,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "created_at": r.created_at.isoformat(),
             }
 
-    @app.get("/v1/defences")
+    @app.get("/v1/defences", dependencies=auth)
     def defences() -> list[dict[str, Any]]:
         with sf() as db:
             return [
@@ -129,7 +145,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 for d in db.execute(select(Defence).where(Defence.retired.is_(False))).scalars()
             ]
 
-    @app.post("/v1/candidates/{candidate_id}/approve")
+    @app.post("/v1/candidates/{candidate_id}/approve", dependencies=auth)
     def approve(candidate_id: str, body: ApproveRequest) -> dict[str, Any]:
         """Human approval (G8): sign the candidate's rule, at its gate-tested hash, into a bundle."""
         key_path, key_id = _signing_key(s)
@@ -172,7 +188,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "note": "deliver this signed bundle to the gateway (PUT /api/v1/policy) or commit it for the gateway to hot-reload",
         }
 
-    @app.get("/v1/stats")
+    @app.get("/v1/stats", dependencies=auth)
     def stats() -> dict[str, Any]:
         with sf() as db:
             return {

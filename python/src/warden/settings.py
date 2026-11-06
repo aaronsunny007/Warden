@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     # Gateway / control plane
     gateway_url: str = "http://127.0.0.1:8787"
     gateway_admin_token: str = ""
+    control_token: str = ""  # bearer token for the control plane /v1 API; empty = open (dev only)
     lab_url: str = "http://127.0.0.1:8790"
     policy_cli: str = ""  # path to warden-policy CLI (dist/cli.js); auto-detected if empty
     signing_key: str = ""  # path to the Ed25519 private key PEM used to sign approved bundles

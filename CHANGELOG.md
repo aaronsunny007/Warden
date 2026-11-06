@@ -2,6 +2,26 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- `verify` workflow: Helm on a live `kind` cluster, `terraform fmt/init/validate`, DeBERTa L2 fine-tune, a
+  write-once locked-test scorer (`warden eval locked`), and a LaTeX report build.
+- Full LaTeX report (`report/main.tex`), with tables generated from `docs/results/*.json` by `report/make_tables.py`.
+- Loop results (simulated victim): `docs/results/loop-gated` (RQ3) and `docs/results/rq2`.
+
+### Results
+
+- `terraform validate` passes and the Helm chart installs on `kind` and answers its smoke tests. The locked test split was scored once: cascade + scratch L2 blocks 98.2% of iid and
+  88.9% of OOD attacks at 1.9% benign block rate. The first DeBERTa run diverged to NaN (torch 2.15 / transformers 5.21); its locked row measures a broken model.
+
+### Fixed
+
+- **DeBERTa training** diverged to NaN on the lockfile's torch 2.15 / transformers 5.21; the `train` extra is now constrained to `torch<2.9` and `transformers<4.57` (locked at 2.8.0 / 4.56.2), where it trains (dev hold-out F1 0.98; dev only, not locked-split). `training/train_l2.py` now logs a per-epoch curve, checks the served ONNX against torch, and refuses to export a degenerate model.
+- **Helm chart deadlock** found by the first live `kind` install: the migration was a `post-install` hook, but `helm install --wait` waits for pod readiness first and the pods wait for the schema. It is now a regular Job named per release revision.
+- Dashboard image build (missing `public/` directory) and DeBERTa tokenizer dependencies in CI.
+
 ## [0.1.1] - 2026-10-28
 
 ### Fixed

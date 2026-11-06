@@ -65,6 +65,14 @@ def cmd_locked(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_locked_public(a: argparse.Namespace) -> int:
+    from warden.eval.locked_public import run
+
+    onnx = dict(x.split("=", 1) for x in a.onnx or [])
+    print(json.dumps(run(Path(a.out), onnx), indent=2))
+    return 0
+
+
 def cmd_agentdojo(a: argparse.Namespace) -> int:
     import asyncio
 
@@ -147,6 +155,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--onnx", action="append", help="TAG=dir of an extra ONNX L2 bundle to score alongside lite"
     )
     lk.set_defaults(fn=cmd_locked)
+
+    lp = eval_sub.add_parser(
+        "locked-public",
+        help="score the public held-out split once (needs WARDEN_UNLOCK_PUBLIC_HELDOUT=1)",
+    )
+    lp.add_argument("--out", default="../docs/results/locked-public.json")
+    lp.add_argument(
+        "--onnx", action="append", help="TAG=dir of an extra ONNX L2 bundle to score alongside lite"
+    )
+    lp.set_defaults(fn=cmd_locked_public)
 
     ad = eval_sub.add_parser("agentdojo", help="V1: run an AgentDojo suite through each baseline")
     ad.add_argument("--suite", default="banking", choices=["workspace", "banking", "travel", "slack"])

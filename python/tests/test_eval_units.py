@@ -70,6 +70,24 @@ def test_test_split_is_locked(monkeypatch: pytest.MonkeyPatch) -> None:
     assert verify_lock()
 
 
+def test_public_heldout_is_committed_and_gated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from warden.eval import locked_public
+
+    assert locked_public.verify_public_lock()
+    ex = locked_public.load_public()
+    assert len(ex) == 116 and {e.label for e in ex} == {"attack", "benign"}
+    norm = lambda t: " ".join(t.lower().split())  # noqa: E731
+    assert not {norm(e.text) for e in ex} & {norm(e.text) for e in load(["dev"])}  # no training-text leakage
+    monkeypatch.delenv(locked_public.UNLOCK_ENV, raising=False)
+    with pytest.raises(LockedSplitError):
+        locked_public.run(tmp_path / "x.json")
+    monkeypatch.setenv(locked_public.UNLOCK_ENV, "1")
+    done = tmp_path / "done.json"
+    done.write_text("{}")
+    with pytest.raises(FileExistsError):  # write-once
+        locked_public.run(done)
+
+
 class FakeTools:
     def __init__(self) -> None:
         self.calls: list[ToolCall] = []

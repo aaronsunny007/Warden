@@ -1,0 +1,53 @@
+name: pages
+
+# Publishes the report (PDF) and the rendered docs to GitHub Pages. This is a documentation site, not a
+# deployment of the gateway. One-time setup: repo Settings > Pages > Source: "GitHub Actions".
+
+on:
+  workflow_dispatch:
+  push:
+    # the default branch only; feature branches can still be published by hand via workflow_dispatch
+    branches: [main, claude/clever-ptolemy-maj4nm]
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'site/**'
+      - 'docs/**'
+      - 'report/**'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: python3 report/make_tables.py
+      - uses: xu-cheng/latex-action@e2f99d4b3685b0da93f97e1b86ad8fab81105098 # v3
+        with:
+          root_file: main.tex
+          working_directory: report
+      - run: |
+          python3 -m pip install markdown
+          python3 site/build_site.py _site report/main.pdf
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

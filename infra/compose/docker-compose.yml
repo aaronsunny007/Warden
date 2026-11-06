@@ -180,6 +180,7 @@ services:
       WARDEN_DATABASE_URL: postgresql+psycopg://warden:warden@postgres:5432/warden
       WARDEN_GATEWAY_URL: http://gateway:8787
       WARDEN_GATEWAY_ADMIN_TOKEN: ${WARDEN_ADMIN_TOKEN:-}
+      WARDEN_CONTROL_TOKEN: ${WARDEN_ADMIN_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -209,6 +210,7 @@ services:
       # The dashboard proxies /admin -> gateway and /control -> control plane (next.config rewrites).
       WARDEN_GATEWAY_URL: http://gateway:8787
       WARDEN_CONTROL_URL: http://control:8008
+      WARDEN_ADMIN_TOKEN: ${WARDEN_ADMIN_TOKEN:-} # added to proxied calls server-side
       NODE_ENV: production
     ports:
       - '3000:3000'
