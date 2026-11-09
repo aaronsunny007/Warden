@@ -352,3 +352,19 @@ def test_scan_html_and_bad_input() -> None:
         assert c.post("/v1/scan", json={"kind": "exe", "text": "x"}).status_code == 422
         assert c.post("/v1/scan", json={}).status_code == 422
         assert c.post("/v1/scan", json={"content_base64": "###"}).status_code == 422
+
+
+def test_explanation_is_plain_english_and_names_the_hidden_text() -> None:
+    with _client() as c:
+        r = c.post("/v1/detect", json={"text": "Thanks!" + zw_encode(ATTACK), "channel": "output"}).json()
+    e = r["explanation"]
+    assert e.startswith(("Blocked", "Held for review")) and "tool output" in e
+    assert "Hidden content" in e and "Ignore all previous" in e and "Detector layer" in e
+
+
+def test_explanation_for_clean_text_is_short() -> None:
+    with _client() as c:
+        r = c.post(
+            "/v1/detect", json={"text": "Please send me the meeting notes from Tuesday afternoon."}
+        ).json()
+    assert r["explanation"].startswith("Allowed") and "Hidden content" not in r["explanation"]

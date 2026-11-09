@@ -20,6 +20,7 @@ from warden.detector import hidden
 from warden.detector.cascade import Cascade, Thresholds
 from warden.detector.classifier import Classifier, LiteClassifier, OnnxClassifier
 from warden.detector.embed import make_embedder
+from warden.detector.explain import explain
 from warden.detector.index import MemoryIndex, PgVectorIndex, VectorIndex
 from warden.detector.judge import Budget, OllamaJudge
 from warden.settings import Settings, get_settings
@@ -62,6 +63,7 @@ class DetectResponse(BaseModel):
     score: float
     layers: list[LayerOut]
     hidden: list[HiddenOut] = []
+    explanation: str = ""
 
 
 class ScanRequest(BaseModel):
@@ -185,6 +187,7 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
             score=d.score,
             layers=[LayerOut(**layer.__dict__) for layer in d.layers],
             hidden=_hidden_out(rep),
+            explanation=explain(d, verdict, req.channel, rep),
         )
 
     @app.post("/v1/scan", response_model=ScanResponse)
@@ -213,6 +216,7 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
             score=d.score,
             layers=[LayerOut(**layer.__dict__) for layer in d.layers],
             hidden=_hidden_out(rep),
+            explanation=explain(d, verdict, req.channel, rep),
             kind=kind,
             severity=rep.severity,
             visible_chars=len(rep.visible_text),

@@ -20,6 +20,7 @@ import {
 } from '@warden/policy-ir';
 import type { GatewayConfig } from './config.js';
 import { scoresOf, type Detector, type DetectorResult } from './detector.js';
+import { explainVerdict } from './explain.js';
 import type { EventBus } from './events/bus.js';
 import type { Verdict, VerdictDecision } from './events/types.js';
 import type { Metrics } from './metrics.js';
@@ -58,22 +59,6 @@ export interface Inspection {
   decision: VerdictDecision;
   verdict: Verdict;
   evaluation: Evaluation;
-}
-
-function explain(decision: VerdictDecision, ev: Evaluation, extra: string[]): string {
-  const parts = ev.enforced.map(
-    (m) => `${m.ruleId}${m.message ? ` (${m.message})` : ''}: ${summariseEvidence(m)}`,
-  );
-  const shadow = ev.observed.length ? ` [shadow: ${ev.observed.map((m) => m.ruleId).join(', ')}]` : '';
-  const body = [...parts, ...extra].join('; ');
-  return `${decision}${body ? ` — ${body}` : ''}${shadow}`;
-}
-
-function summariseEvidence(m: RuleMatch): string {
-  return m.evidence
-    .slice(0, 3)
-    .map((e) => `${e.kind}${e.detail ? `=${e.detail}` : e.span ? `="${e.span.text.slice(0, 60)}"` : ''}`)
-    .join(', ');
 }
 
 export function resultText(result: ToolResult): string {
@@ -333,7 +318,14 @@ export class Inspector {
       tainted: ctx.tainted,
       taintedNow: opts.taintedNow ?? false,
       latencyMs: Math.round(latency * 1000) / 1000,
-      explanation: explain(decision, ev, opts.extra ?? []),
+      explanation: explainVerdict({
+        decision,
+        evaluation: ev,
+        channel: ctx.channel,
+        tool: `${ctx.server}.${ctx.tool}`,
+        layers,
+        extra: opts.extra,
+      }),
       owasp: [...new Set(ev.enforced.flatMap((m) => m.owasp))],
       evidence: enforcedEvidence.slice(0, 20),
       bundleId: this.policies.bundle.bundle.id,
