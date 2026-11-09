@@ -49,12 +49,16 @@ class MissLog:
     def __init__(self, path: str | Path) -> None:
         self.path = Path(path)
 
-    def all(self) -> list[Miss]:
+    def _lines(self) -> list[str]:
         if not self.path.exists():
             return []
-        return [
-            Miss(**json.loads(x)) for x in self.path.read_text(encoding="utf-8").splitlines() if x.strip()
-        ]
+        return [x for x in self.path.read_text(encoding="utf-8").splitlines() if x.strip()]
+
+    def all(self) -> list[Miss]:
+        return [Miss(**json.loads(x)) for x in self._lines()]
+
+    def count(self) -> int:
+        return len(self._lines())
 
     def add(
         self,
@@ -70,8 +74,9 @@ class MissLog:
             raise ValueError(f"channel must be one of {sorted(CHANNELS)}")
         if not text.strip():
             raise ValueError("text is empty")
+        existing = self.all()
         m = Miss(
-            id=f"miss-{len(self.all()) + 1:05d}",
+            id=f"miss-{len(existing) + 1:05d}",
             text=text[:20000],
             channel=channel,
             source=source,
@@ -79,7 +84,7 @@ class MissLog:
             note=note[:500],
             verdict_at_time=verdict,
         )
-        if any(x.signature == m.signature for x in self.all()):
+        if any(x.signature == m.signature for x in existing):
             return None  # already logged
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self.path.open("a", encoding="utf-8") as f:

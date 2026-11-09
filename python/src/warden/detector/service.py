@@ -254,7 +254,7 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
         from warden.loop.misses import MissLog
 
         log = MissLog(s.miss_log)
-        if len(log.all()) >= 10_000:
+        if log.count() >= 10_000:
             raise HTTPException(429, "miss log is full; run `warden loop learn` and rotate it")
         try:
             m = log.add(body.text, channel=body.channel, source="report", goal=body.goal, note=body.note)

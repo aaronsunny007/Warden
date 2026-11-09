@@ -26,6 +26,7 @@ def test_log_add_dedupes_and_validates(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         log.add(TEXT, channel="nope")
     assert log.all()[0].text == TEXT
+    assert log.count() == 1 == len(log.all())
 
 
 def test_service_miss_endpoint_is_off_by_default_and_logs_when_enabled(tmp_path: Path) -> None:
