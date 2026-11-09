@@ -51,7 +51,9 @@ def explain(d: Detection, verdict: str, channel: str, hidden: HiddenReport | Non
         parts.append(f"{lead} {stance} (score {last.score:.2f}).")
         l1 = next((layer for layer in d.layers if layer.layer == "L1"), None)
         fam = re.search(r"nearest=([\w-]+)", l1.detail) if l1 else None
-        if fam and fam.group(1) in FAMILY and verdict != "benign":
+        sim = re.search(r"top_sim=([\d.]+)", l1.detail) if l1 else None
+        # Only name a pattern when the match is close; a far "nearest" neighbour would mislead.
+        if fam and fam.group(1) in FAMILY and verdict != "benign" and sim and float(sim.group(1)) >= 0.4:
             parts.append(f"Closest known pattern: {FAMILY[fam.group(1)]}.")
     if verdict == "uncertain" and hidden is not None and hidden.has_payload:
         parts.append("Text a person cannot see is never treated as safe, so it was not allowed through.")
