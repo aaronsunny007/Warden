@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 
 import pytest
+from test_detector import cascade
+from test_hidden import ATTACK, make_pdf, tag_encode, zw_encode
 
-from tests.test_detector import cascade
-from tests.test_hidden import ATTACK, make_pdf, tag_encode, zw_encode
 from warden.adapters import claude_code
 from warden.adapters.client import WardenClient
 from warden.detector import guard
