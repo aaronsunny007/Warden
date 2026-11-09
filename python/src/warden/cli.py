@@ -3,6 +3,7 @@
 warden detector serve [--port 8000]
 warden eval run --experiment rq1 --baselines B0,B1,B2,B3 [--agent simulated|ollama:qwen2.5:7b] [--templates a,b] [--seeds 1] [--sample N]
 warden corpus verify-lock
+warden scan FILE [--kind auto|text|html|pdf|image] [--json]   find text hidden in a file
 warden audit consume --brokers localhost:9092
 warden loop run ...        (see `warden loop --help`)
 warden gate ...            (see `warden gate --help`)
@@ -55,6 +56,34 @@ def cmd_eval(a: argparse.Namespace) -> int:
     if a.fail_on_hypothesis and any(h and not (h["asr_ok"] and h["utility_ok"]) for h in res["hypotheses"]):
         return 3
     return 0
+
+
+def cmd_scan(a: argparse.Namespace) -> int:
+    from warden.detector import hidden
+
+    try:
+        rep = hidden.scan(Path(a.file).read_bytes(), a.kind)
+    except ImportError:
+        print("file scanning needs the 'files' extra: pip install 'warden[files]'", file=sys.stderr)
+        return 2
+    if a.json:
+        out = {
+            "severity": rep.severity,
+            "findings": [f.__dict__ for f in rep.findings],
+            "hidden_text": rep.hidden_text,
+            "notes": rep.notes,
+        }
+        print(json.dumps(out, indent=2))
+    else:
+        print(f"{a.file}: severity {rep.severity}, {len(rep.findings)} finding(s)")
+        for f in rep.findings:
+            where = f" [{f.location}]" if f.location else ""
+            print(f"  {f.severity:6} {f.kind}{where}: {f.detail}")
+            if f.decoded:
+                print(f"         hidden text: {f.decoded[:200]!r}")
+        for n in rep.notes:
+            print(f"  note: {n}")
+    return 1 if rep.severity == "high" else 0
 
 
 def cmd_locked(a: argparse.Namespace) -> int:
@@ -135,6 +164,14 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--host", default="127.0.0.1")
     d.add_argument("--port", type=int, default=8000)
     d.set_defaults(fn=cmd_detector)
+
+    sc = sub.add_parser(
+        "scan", help="find text hidden in a file (exit 1 when a high-severity finding is present)"
+    )
+    sc.add_argument("file")
+    sc.add_argument("--kind", default="auto", choices=["auto", "text", "html", "pdf", "image"])
+    sc.add_argument("--json", action="store_true")
+    sc.set_defaults(fn=cmd_scan)
 
     eval_sub = sub.add_parser("eval").add_subparsers(dest="sub", required=True)
     e = eval_sub.add_parser("run", help="V2: the Acme Support lab")

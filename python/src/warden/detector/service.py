@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from warden import __version__
 from warden.corpus import load
+from warden.detector import hidden
 from warden.detector.cascade import Cascade, Thresholds
 from warden.detector.classifier import Classifier, LiteClassifier, OnnxClassifier
 from warden.detector.embed import make_embedder
@@ -48,10 +49,35 @@ class LayerOut(BaseModel):
     detail: str
 
 
+class HiddenOut(BaseModel):
+    kind: str
+    severity: str
+    detail: str
+    decoded: str = ""
+    location: str = ""
+
+
 class DetectResponse(BaseModel):
     verdict: str
     score: float
     layers: list[LayerOut]
+    hidden: list[HiddenOut] = []
+
+
+class ScanRequest(BaseModel):
+    kind: str = "auto"  # auto | text | html | pdf | image
+    text: str = Field(default="", max_length=65536)
+    content_base64: str = Field(default="", max_length=14_000_000)
+    channel: str = "output"
+    risk_tier: str = "read_only"
+
+
+class ScanResponse(DetectResponse):
+    kind: str
+    severity: str
+    visible_chars: int
+    hidden_text: str
+    notes: list[str]
 
 
 class CorpusAdd(BaseModel):
@@ -102,6 +128,17 @@ def build_cascade(s: Settings) -> Cascade:
     return cascade
 
 
+def _hidden_out(r: hidden.HiddenReport) -> list[HiddenOut]:
+    return [HiddenOut(**f.__dict__) for f in r.findings]
+
+
+def _verdict(cascade_verdict: str, r: hidden.HiddenReport) -> str:
+    """Hidden instructions are an anomaly in themselves: never wave them through as benign."""
+    if cascade_verdict == "benign" and r.severity == "high" and r.has_payload:
+        return "uncertain"
+    return cascade_verdict
+
+
 def create_app(settings: Settings | None = None, cascade: Cascade | None = None) -> FastAPI:
     s = settings or get_settings()
     state: dict[str, Any] = {}
@@ -137,11 +174,50 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
     @app.post("/v1/detect", response_model=DetectResponse)
     def detect(req: DetectRequest) -> DetectResponse:
         start = time.perf_counter()
-        d = cas().detect(req.text, req.channel, req.risk_tier)
+        rep = hidden.scan_text(req.text)
+        text = f"{req.text}\n{rep.hidden_text}" if rep.has_payload else req.text
+        d = cas().detect(text, req.channel, req.risk_tier)
+        verdict = _verdict(d.verdict, rep)
         LAT.labels(d.layers[-1].layer if d.layers else "none").observe(time.perf_counter() - start)
-        VERDICTS.labels(d.verdict, req.channel).inc()
+        VERDICTS.labels(verdict, req.channel).inc()
         return DetectResponse(
-            verdict=d.verdict, score=d.score, layers=[LayerOut(**layer.__dict__) for layer in d.layers]
+            verdict=verdict,
+            score=d.score,
+            layers=[LayerOut(**layer.__dict__) for layer in d.layers],
+            hidden=_hidden_out(rep),
+        )
+
+    @app.post("/v1/scan", response_model=ScanResponse)
+    def scan(req: ScanRequest) -> ScanResponse:
+        """Look inside a document: PDF, HTML, image or text. Reads what a person cannot see."""
+        if req.kind not in {"auto", "text", "html", "pdf", "image"}:
+            raise HTTPException(422, "kind must be auto, text, html, pdf or image")
+        try:
+            raw = hidden.decode_b64(req.content_base64) if req.content_base64 else req.text.encode()
+        except ValueError as e:
+            raise HTTPException(422, str(e)) from e
+        if not raw:
+            raise HTTPException(422, "send text or content_base64")
+        kind = hidden.sniff(raw) if req.kind == "auto" else req.kind
+        try:
+            rep = hidden.scan(raw, kind)
+        except ImportError as e:
+            raise HTTPException(
+                501, "file scanning needs the 'files' extra: pip install 'warden[files]'"
+            ) from e
+        d = cas().detect(rep.detection_text()[:65536] or " ", req.channel, req.risk_tier)
+        verdict = _verdict(d.verdict, rep)
+        VERDICTS.labels(verdict, req.channel).inc()
+        return ScanResponse(
+            verdict=verdict,
+            score=d.score,
+            layers=[LayerOut(**layer.__dict__) for layer in d.layers],
+            hidden=_hidden_out(rep),
+            kind=kind,
+            severity=rep.severity,
+            visible_chars=len(rep.visible_text),
+            hidden_text=rep.hidden_text[:4000],
+            notes=rep.notes,
         )
 
     @app.post("/v1/corpus")

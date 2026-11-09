@@ -6,6 +6,7 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ### Added
 
+- **Hidden-content scanner** (`warden.detector.hidden`, `warden scan`, `POST /v1/scan`, `hidden` findings on `/v1/detect`; optional `files` extra): invisible-Unicode payloads, hidden HTML, PDF hidden text/annotations/metadata, image metadata, LSB and low-contrast text via OCR. Unit-tested on constructed fixtures only.
 - `verify` workflow: Helm on a live `kind` cluster, `terraform fmt/init/validate`, DeBERTa L2 fine-tune, a
   write-once locked-test scorer (`warden eval locked`), and a LaTeX report build.
 - Full LaTeX report (`report/main.tex`), with tables generated from `docs/results/*.json` by `report/make_tables.py`.

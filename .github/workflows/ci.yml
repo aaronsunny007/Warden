@@ -71,7 +71,7 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
       - name: Install (dev + agents extra, from the lockfile)
-        run: uv sync --frozen --group dev --extra agents
+        run: uv sync --frozen --group dev --extra agents --extra files
       - name: Lint (ruff)
         run: uv run ruff check .
       - name: Format (ruff)
@@ -120,7 +120,7 @@ jobs:
         run: uv python install 3.12
       - name: Install (dev + agents extra, from the lockfile)
         working-directory: python
-        run: uv sync --frozen --group dev --extra agents
+        run: uv sync --frozen --group dev --extra agents --extra files
       - name: Migrate the test database
         working-directory: python
         env:
