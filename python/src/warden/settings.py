@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     embed_model: str = ""  # e.g. sentence-transformers/all-MiniLM-L6-v2; empty = offline hashing embedder
     l2_onnx_dir: str = ""  # directory with model.onnx + tokenizer.json (+ labels.json)
     l2_mode: str = "lite"  # lite | onnx | off
+    l2_extra_train: str = (
+        ""  # optional JSONL of {"text", "label": 0|1} added to the lite classifier's training data
+    )
     ollama_url: str = "http://127.0.0.1:11434"
     judge_model: str = ""  # e.g. qwen2.5:7b; empty disables L3
     judge_timeout_s: float = 8.0

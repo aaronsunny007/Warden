@@ -72,6 +72,13 @@ def main() -> int:
     ap.add_argument("--threads", type=int, default=0, help="torch CPU threads (0 = library default)")
     ap.add_argument("--min-f1", type=float, default=0.5, help="refuse to export a model below this dev F1")
     ap.add_argument("--max-drift", type=float, default=1e-2, help="max torch-vs-served probability drift")
+    ap.add_argument(
+        "--public-pool",
+        action="store_true",
+        help="round 2: also train on the pinned public pool (deepset train + neuralchemy train); "
+        "neuralchemy validation is reported separately. Test files are never trained on.",
+    )
+    ap.add_argument("--pool-cache", default="", help="directory to cache the pool downloads")
     a = ap.parse_args()
     # If a step ever stalls, dump every thread's stack to stderr every 4 minutes instead of hanging silently.
     faulthandler.dump_traceback_later(240, repeat=True)
@@ -92,6 +99,18 @@ def main() -> int:
         texts, labels, test_size=a.val_frac, random_state=a.seed, stratify=labels
     )
     print(f"dev: {len(texts)} examples ({sum(labels)} injection); train={len(x_tr)} val={len(x_val)}")
+    pool_val: tuple[list[str], list[int]] = ([], [])
+    if a.public_pool:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from public_pool import load_pool
+
+        pool = load_pool(Path(a.pool_cache) if a.pool_cache else None)
+        x_tr, y_tr = x_tr + pool["train"][0], y_tr + pool["train"][1]
+        pool_val = pool["val"]
+        print(
+            f"public pool: +{len(pool['train'][0])} train ({sum(pool['train'][1])} injection), "
+            f"validation {len(pool_val[0])}; train now {len(x_tr)}"
+        )
 
     tok = AutoTokenizer.from_pretrained(a.model)
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -181,6 +200,10 @@ def main() -> int:
     preds = [int(p >= 0.5) for p in val_probs]
     m = _metrics(y_val, preds)
     print("validation (dev hold-out): " + json.dumps({k: round(v, 4) for k, v in m.items()}))
+    pool_m: dict[str, float] = {}
+    if pool_val[0]:
+        pool_m = _metrics(pool_val[1], [int(p >= 0.5) for p in predict(pool_val[0])])
+        print("validation (neuralchemy validation): " + json.dumps({k: round(v, 4) for k, v in pool_m.items()}))
 
     # Export to ONNX. The cascade's OnnxClassifier feeds input_ids + attention_mask and reads the
     # softmax probability of the "injection" class, so we export exactly those inputs.
@@ -227,7 +250,7 @@ def main() -> int:
     (out_dir / "metrics.json").write_text(
         json.dumps(
             {"base_model": a.model, "val": m, "served_val": served_m, "max_torch_vs_served_drift": drift,
-             "epochs": a.epochs, "lr": a.lr}, indent=2)
+             "epochs": a.epochs, "lr": a.lr, "public_pool": a.public_pool, "pool_val": pool_m}, indent=2)
     )
     if m["f1"] < a.min_f1 or served_m["f1"] < a.min_f1 or drift > a.max_drift:
         print(

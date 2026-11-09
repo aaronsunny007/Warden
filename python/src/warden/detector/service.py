@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hmac
+import json
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Header, HTTPException
@@ -68,9 +70,15 @@ def build_cascade(s: Settings) -> Cascade:
     if s.l2_mode == "onnx" and s.l2_onnx_dir:
         classifier = OnnxClassifier(s.l2_onnx_dir)
     elif s.l2_mode == "lite":
-        classifier = LiteClassifier().fit(
-            [e.text for e in dev], [1 if e.label == "attack" else 0 for e in dev]
-        )
+        xs = [e.text for e in dev]
+        ys = [1 if e.label == "attack" else 0 for e in dev]
+        if s.l2_extra_train:
+            for line in Path(s.l2_extra_train).read_text(encoding="utf-8").splitlines():
+                if line.strip():
+                    r = json.loads(line)
+                    xs.append(r["text"])
+                    ys.append(int(r["label"]))
+        classifier = LiteClassifier().fit(xs, ys)
     judge = (
         OllamaJudge(
             s.ollama_url,

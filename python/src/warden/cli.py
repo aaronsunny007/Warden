@@ -73,6 +73,15 @@ def cmd_locked_public(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_locked_fresh(a: argparse.Namespace) -> int:
+    from warden.eval.locked_fresh import run
+
+    onnx = dict(x.split("=", 1) for x in a.onnx or [])
+    extra = dict(x.split("=", 1) for x in a.lite_extra or [])
+    print(json.dumps(run(a.split, Path(a.out), onnx, extra), indent=2))
+    return 0
+
+
 def cmd_agentdojo(a: argparse.Namespace) -> int:
     import asyncio
 
@@ -165,6 +174,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--onnx", action="append", help="TAG=dir of an extra ONNX L2 bundle to score alongside lite"
     )
     lp.set_defaults(fn=cmd_locked_public)
+
+    lf = eval_sub.add_parser(
+        "locked-fresh",
+        help="score one round-2 fresh split once (needs WARDEN_UNLOCK_FRESH_HELDOUT=1)",
+    )
+    lf.add_argument("--split", required=True, choices=["neuralchemy_test", "jackhhao_test"])
+    lf.add_argument("--out", required=True)
+    lf.add_argument("--onnx", action="append", help="TAG=dir of an ONNX L2 bundle to score")
+    lf.add_argument("--lite-extra", action="append", help="TAG=file.jsonl of extra lite training data")
+    lf.set_defaults(fn=cmd_locked_fresh)
 
     ad = eval_sub.add_parser("agentdojo", help="V1: run an AgentDojo suite through each baseline")
     ad.add_argument("--suite", default="banking", choices=["workspace", "banking", "travel", "slack"])

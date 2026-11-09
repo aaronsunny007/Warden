@@ -88,6 +88,34 @@ def test_public_heldout_is_committed_and_gated(monkeypatch: pytest.MonkeyPatch, 
         locked_public.run(done)
 
 
+def test_fresh_splits_are_committed_and_gated(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from warden.eval import locked_fresh
+
+    norm = lambda t: " ".join(t.lower().split())  # noqa: E731
+    spent = {norm(e.text) for e in locked_fresh_public()}
+    dev = {norm(e.text) for e in load(["dev"])}
+    for split, n in (("neuralchemy_test", 942), ("jackhhao_test", 393)):
+        assert locked_fresh.verify_fresh_lock(split)
+        ex = locked_fresh.load_fresh(split)
+        assert len(ex) == n and {e.label for e in ex} == {"attack", "benign"}
+        texts = {norm(e.text) for e in ex}
+        assert len(texts) == n and not texts & dev and not texts & spent  # unique, no leakage
+    monkeypatch.delenv(locked_fresh.UNLOCK_ENV, raising=False)
+    with pytest.raises(LockedSplitError):
+        locked_fresh.run("jackhhao_test", tmp_path / "x.json")
+    monkeypatch.setenv(locked_fresh.UNLOCK_ENV, "1")
+    done = tmp_path / "done.json"
+    done.write_text("{}")
+    with pytest.raises(FileExistsError):  # write-once
+        locked_fresh.run("jackhhao_test", done)
+
+
+def locked_fresh_public():  # type: ignore[no-untyped-def]
+    from warden.eval import locked_public
+
+    return locked_public.load_public()
+
+
 class FakeTools:
     def __init__(self) -> None:
         self.calls: list[ToolCall] = []
