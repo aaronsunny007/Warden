@@ -6,6 +6,7 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ### Added
 
+- **Beat Warden demo** (`site/demo`, published at `demo/` by the `pages` workflow): a static attack-and-defend game that replays 822 recorded attack combinations and 40 harmless messages through the real detector, with a simulated worst-case assistant on the "without Warden" side. `python/scripts/build_demo_data.py` regenerates the data and a test checks it has not drifted. It replays recorded results; it does not run the detector in the browser.
 - **Scoreboard page** (`site/scoreboard.py`, published as `scoreboard.html` by the `pages` workflow): every committed result with its rules and a build-time recheck of each locked set's commitment; bad numbers are shaded. Republish by rerunning the `pages` workflow.
 - **Learn from mistakes** (`warden.loop.misses`, `warden loop miss add|import-toolout`, `warden loop learn`, `POST /v1/miss`): a miss log feeds the blue team, and proposals run the offline gate stages (G1, G2, G4, G5) and stay in shadow mode. Run on the 25 toolout attacks that passed (dev use of a spent set): 6 proposals cleared the offline gate, 19 were deferred by the hourly rule budget.
 - **Tool-output injection set** (`data/toolout`, 720 synthetic items, protocol committed before scoring) and `warden eval toolout` (write-once). Scored once: 66.9% of attacks blocked, but 23.6% of benign tool outputs wrongly blocked on the default stack. Synthetic and self-authored; see `docs/results/toolout.md`.

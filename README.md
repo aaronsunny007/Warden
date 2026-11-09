@@ -134,6 +134,8 @@ isolate whether torch or transformers is responsible. With torch 2.8.0 / transfo
 the first run, and re-scoring would invalidate it. A trustworthy locked-split number for DeBERTa needs newly collected
 test data. The corpus is small and synthetic, so these intervals are wide.
 
+**Play and verify:** the Pages site has a [Beat Warden game](site/demo/index.html) (recorded results of the real detector against 822 hidden-instruction combinations; free-text attacks need a local run) and a [scoreboard](site/scoreboard.py) that rechecks every locked-set commitment when the site is built. Both appear after the `pages` workflow is rerun.
+
 ## Hidden content (beyond plain text)
 
 Injections do not have to be visible. `warden scan FILE` and the detector's `POST /v1/scan` look inside
