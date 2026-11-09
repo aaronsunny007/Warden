@@ -305,8 +305,8 @@ def test_decode_b64_rejects_garbage() -> None:
 
 def _client():  # type: ignore[no-untyped-def]
     from fastapi.testclient import TestClient
+    from test_detector import cascade
 
-    from tests.test_detector import cascade
     from warden.detector.service import create_app
 
     return TestClient(create_app(cascade=cascade()))
