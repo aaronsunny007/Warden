@@ -1,0 +1,399 @@
+{
+  "split": "jackhhao_test",
+  "n": 393,
+  "embedder": "",
+  "l2_mode": "lite",
+  "judge": false,
+  "cascade_full:lite": {
+    "attack_blocked": {
+      "hits": 96,
+      "n": 137,
+      "rate": 0.7007,
+      "ci95": [
+        0.6194,
+        0.7711
+      ]
+    },
+    "attack_flagged": {
+      "hits": 135,
+      "n": 137,
+      "rate": 0.9854,
+      "ci95": [
+        0.9483,
+        0.996
+      ]
+    },
+    "benign_blocked": {
+      "hits": 42,
+      "n": 256,
+      "rate": 0.1641,
+      "ci95": [
+        0.1237,
+        0.2143
+      ]
+    },
+    "benign_flagged": {
+      "hits": 221,
+      "n": 256,
+      "rate": 0.8633,
+      "ci95": [
+        0.8158,
+        0.9
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 135,
+        "n": 137,
+        "rate": 0.9854,
+        "ci95": [
+          0.9483,
+          0.996
+        ]
+      }
+    }
+  },
+  "l2_only:lite": {
+    "attack_blocked": {
+      "hits": 0,
+      "n": 137,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0273
+      ]
+    },
+    "attack_flagged": {
+      "hits": 135,
+      "n": 137,
+      "rate": 0.9854,
+      "ci95": [
+        0.9483,
+        0.996
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 256,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0148
+      ]
+    },
+    "benign_flagged": {
+      "hits": 221,
+      "n": 256,
+      "rate": 0.8633,
+      "ci95": [
+        0.8158,
+        0.9
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 135,
+        "n": 137,
+        "rate": 0.9854,
+        "ci95": [
+          0.9483,
+          0.996
+        ]
+      }
+    }
+  },
+  "cascade_full:lite+pool": {
+    "attack_blocked": {
+      "hits": 96,
+      "n": 137,
+      "rate": 0.7007,
+      "ci95": [
+        0.6194,
+        0.7711
+      ]
+    },
+    "attack_flagged": {
+      "hits": 137,
+      "n": 137,
+      "rate": 1.0,
+      "ci95": [
+        0.9727,
+        1.0
+      ]
+    },
+    "benign_blocked": {
+      "hits": 42,
+      "n": 256,
+      "rate": 0.1641,
+      "ci95": [
+        0.1237,
+        0.2143
+      ]
+    },
+    "benign_flagged": {
+      "hits": 249,
+      "n": 256,
+      "rate": 0.9727,
+      "ci95": [
+        0.9446,
+        0.9867
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 137,
+        "n": 137,
+        "rate": 1.0,
+        "ci95": [
+          0.9727,
+          1.0
+        ]
+      }
+    }
+  },
+  "l2_only:lite+pool": {
+    "attack_blocked": {
+      "hits": 0,
+      "n": 137,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0273
+      ]
+    },
+    "attack_flagged": {
+      "hits": 137,
+      "n": 137,
+      "rate": 1.0,
+      "ci95": [
+        0.9727,
+        1.0
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 256,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0148
+      ]
+    },
+    "benign_flagged": {
+      "hits": 253,
+      "n": 256,
+      "rate": 0.9883,
+      "ci95": [
+        0.9661,
+        0.996
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 137,
+        "n": 137,
+        "rate": 1.0,
+        "ci95": [
+          0.9727,
+          1.0
+        ]
+      }
+    }
+  },
+  "cascade_full:onnx+before": {
+    "attack_blocked": {
+      "hits": 96,
+      "n": 137,
+      "rate": 0.7007,
+      "ci95": [
+        0.6194,
+        0.7711
+      ]
+    },
+    "attack_flagged": {
+      "hits": 130,
+      "n": 137,
+      "rate": 0.9489,
+      "ci95": [
+        0.8983,
+        0.975
+      ]
+    },
+    "benign_blocked": {
+      "hits": 42,
+      "n": 256,
+      "rate": 0.1641,
+      "ci95": [
+        0.1237,
+        0.2143
+      ]
+    },
+    "benign_flagged": {
+      "hits": 99,
+      "n": 256,
+      "rate": 0.3867,
+      "ci95": [
+        0.3292,
+        0.4476
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 130,
+        "n": 137,
+        "rate": 0.9489,
+        "ci95": [
+          0.8983,
+          0.975
+        ]
+      }
+    }
+  },
+  "l2_only:onnx+before": {
+    "attack_blocked": {
+      "hits": 0,
+      "n": 137,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0273
+      ]
+    },
+    "attack_flagged": {
+      "hits": 130,
+      "n": 137,
+      "rate": 0.9489,
+      "ci95": [
+        0.8983,
+        0.975
+      ]
+    },
+    "benign_blocked": {
+      "hits": 0,
+      "n": 256,
+      "rate": 0.0,
+      "ci95": [
+        0.0,
+        0.0148
+      ]
+    },
+    "benign_flagged": {
+      "hits": 94,
+      "n": 256,
+      "rate": 0.3672,
+      "ci95": [
+        0.3105,
+        0.4278
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 130,
+        "n": 137,
+        "rate": 0.9489,
+        "ci95": [
+          0.8983,
+          0.975
+        ]
+      }
+    }
+  },
+  "cascade_full:onnx+after": {
+    "attack_blocked": {
+      "hits": 136,
+      "n": 137,
+      "rate": 0.9927,
+      "ci95": [
+        0.9598,
+        0.9987
+      ]
+    },
+    "attack_flagged": {
+      "hits": 137,
+      "n": 137,
+      "rate": 1.0,
+      "ci95": [
+        0.9727,
+        1.0
+      ]
+    },
+    "benign_blocked": {
+      "hits": 194,
+      "n": 256,
+      "rate": 0.7578,
+      "ci95": [
+        0.7018,
+        0.8062
+      ]
+    },
+    "benign_flagged": {
+      "hits": 215,
+      "n": 256,
+      "rate": 0.8398,
+      "ci95": [
+        0.7899,
+        0.8797
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 137,
+        "n": 137,
+        "rate": 1.0,
+        "ci95": [
+          0.9727,
+          1.0
+        ]
+      }
+    }
+  },
+  "l2_only:onnx+after": {
+    "attack_blocked": {
+      "hits": 136,
+      "n": 137,
+      "rate": 0.9927,
+      "ci95": [
+        0.9598,
+        0.9987
+      ]
+    },
+    "attack_flagged": {
+      "hits": 137,
+      "n": 137,
+      "rate": 1.0,
+      "ci95": [
+        0.9727,
+        1.0
+      ]
+    },
+    "benign_blocked": {
+      "hits": 182,
+      "n": 256,
+      "rate": 0.7109,
+      "ci95": [
+        0.6526,
+        0.763
+      ]
+    },
+    "benign_flagged": {
+      "hits": 215,
+      "n": 256,
+      "rate": 0.8398,
+      "ci95": [
+        0.7899,
+        0.8797
+      ]
+    },
+    "attack_flagged_by_family": {
+      "fresh_jb": {
+        "hits": 137,
+        "n": 137,
+        "rate": 1.0,
+        "ci95": [
+          0.9727,
+          1.0
+        ]
+      }
+    }
+  }
+}

@@ -15,6 +15,16 @@ Everything runs on free/open-source tooling at £0. All data is synthetic; the r
 > victim agent** and a **synthetic corpus** (see [Limitations](#limitations)); they test the pipeline and the
 > relative effect of each defence, not the behaviour of any real LLM.
 
+## Results on real public prompts (not simulated)
+
+Two locked checks on human-written public data, each scored once (details and caveats: `docs/results/locked-public.md`,
+`docs/results/locked-fresh.md`). They show the text classifier generalises poorly, so read the simulated-victim
+numbers below as a test of the pipeline, not of detection quality.
+
+- deepset test (116 prompts): the cascade blocked at most 8% of attacks and flagged 15 to 45%.
+- After retraining on ~4.9k public rows: 89% of attacks blocked on neuralchemy test (same collection, flattering), but on
+  jackhhao test (never trained on) the DeBERTa blocked 76% of benign prompts. Cross-dataset generalisation is **not** solved.
+
 ## Results (RQ1, simulated victim, seed 1)
 
 1,159 attack cases and 13 benign tasks across 11 attack goals × 8 templates. Wilson 95% intervals.
