@@ -9,3 +9,4 @@ infra/helm/**/templates
 *.md
 docs/results
 graphify-out
+site/demo/data.json
