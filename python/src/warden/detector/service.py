@@ -20,7 +20,7 @@ from warden.detector import hidden
 from warden.detector.cascade import Cascade, Thresholds
 from warden.detector.classifier import Classifier, LiteClassifier, OnnxClassifier
 from warden.detector.embed import make_embedder
-from warden.detector.explain import explain
+from warden.detector.guard import Checked, check_bytes, check_text
 from warden.detector.index import MemoryIndex, PgVectorIndex, VectorIndex
 from warden.detector.judge import Budget, OllamaJudge
 from warden.settings import Settings, get_settings
@@ -134,11 +134,15 @@ def _hidden_out(r: hidden.HiddenReport) -> list[HiddenOut]:
     return [HiddenOut(**f.__dict__) for f in r.findings]
 
 
-def _verdict(cascade_verdict: str, r: hidden.HiddenReport) -> str:
-    """Hidden instructions are an anomaly in themselves: never wave them through as benign."""
-    if cascade_verdict == "benign" and r.severity == "high" and r.has_payload:
-        return "uncertain"
-    return cascade_verdict
+def _response[T: BaseModel](model: type[T], c: Checked, **extra: Any) -> T:
+    return model(
+        verdict=c.verdict,
+        score=c.detection.score,
+        layers=[LayerOut(**layer.__dict__) for layer in c.detection.layers],
+        hidden=_hidden_out(c.report),
+        explanation=c.explanation,
+        **extra,
+    )
 
 
 def create_app(settings: Settings | None = None, cascade: Cascade | None = None) -> FastAPI:
@@ -176,19 +180,12 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
     @app.post("/v1/detect", response_model=DetectResponse)
     def detect(req: DetectRequest) -> DetectResponse:
         start = time.perf_counter()
-        rep = hidden.scan_text(req.text)
-        text = f"{req.text}\n{rep.hidden_text}" if rep.has_payload else req.text
-        d = cas().detect(text, req.channel, req.risk_tier)
-        verdict = _verdict(d.verdict, rep)
-        LAT.labels(d.layers[-1].layer if d.layers else "none").observe(time.perf_counter() - start)
-        VERDICTS.labels(verdict, req.channel).inc()
-        return DetectResponse(
-            verdict=verdict,
-            score=d.score,
-            layers=[LayerOut(**layer.__dict__) for layer in d.layers],
-            hidden=_hidden_out(rep),
-            explanation=explain(d, verdict, req.channel, rep),
+        c = check_text(cas(), req.text, req.channel, req.risk_tier)
+        LAT.labels(c.detection.layers[-1].layer if c.detection.layers else "none").observe(
+            time.perf_counter() - start
         )
+        VERDICTS.labels(c.verdict, req.channel).inc()
+        return _response(DetectResponse, c)
 
     @app.post("/v1/scan", response_model=ScanResponse)
     def scan(req: ScanRequest) -> ScanResponse:
@@ -203,25 +200,20 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
             raise HTTPException(422, "send text or content_base64")
         kind = hidden.sniff(raw) if req.kind == "auto" else req.kind
         try:
-            rep = hidden.scan(raw, kind)
+            c = check_bytes(cas(), raw, kind, req.channel, req.risk_tier)
         except ImportError as e:
             raise HTTPException(
                 501, "file scanning needs the 'files' extra: pip install 'warden[files]'"
             ) from e
-        d = cas().detect(rep.detection_text()[:65536] or " ", req.channel, req.risk_tier)
-        verdict = _verdict(d.verdict, rep)
-        VERDICTS.labels(verdict, req.channel).inc()
-        return ScanResponse(
-            verdict=verdict,
-            score=d.score,
-            layers=[LayerOut(**layer.__dict__) for layer in d.layers],
-            hidden=_hidden_out(rep),
-            explanation=explain(d, verdict, req.channel, rep),
+        VERDICTS.labels(c.verdict, req.channel).inc()
+        return _response(
+            ScanResponse,
+            c,
             kind=kind,
-            severity=rep.severity,
-            visible_chars=len(rep.visible_text),
-            hidden_text=rep.hidden_text[:4000],
-            notes=rep.notes,
+            severity=c.report.severity,
+            visible_chars=len(c.report.visible_text),
+            hidden_text=c.report.hidden_text[:4000],
+            notes=c.report.notes,
         )
 
     @app.post("/v1/corpus")

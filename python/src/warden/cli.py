@@ -3,6 +3,7 @@
 warden detector serve [--port 8000]
 warden eval run --experiment rq1 --baselines B0,B1,B2,B3 [--agent simulated|ollama:qwen2.5:7b] [--templates a,b] [--seeds 1] [--sample N]
 warden corpus verify-lock
+warden hook claude-code [--url URL] [--print-settings]   Claude Code hook (stdin -> stdout)
 warden scan FILE [--kind auto|text|html|pdf|image] [--json]   find text hidden in a file
 warden audit consume --brokers localhost:9092
 warden loop run ...        (see `warden loop --help`)
@@ -84,6 +85,18 @@ def cmd_scan(a: argparse.Namespace) -> int:
         for n in rep.notes:
             print(f"  note: {n}")
     return 1 if rep.severity == "high" else 0
+
+
+def cmd_hook(a: argparse.Namespace) -> int:
+    from warden.adapters import claude_code
+    from warden.adapters.client import WardenClient
+
+    if a.print_settings:
+        print(json.dumps(claude_code.settings_snippet(), indent=2))
+        return 0
+    client = WardenClient(a.url, on_error=a.on_error)
+    print(claude_code.run(sys.stdin.read(), client))
+    return 0
 
 
 def cmd_locked(a: argparse.Namespace) -> int:
@@ -172,6 +185,16 @@ def build_parser() -> argparse.ArgumentParser:
     sc.add_argument("--kind", default="auto", choices=["auto", "text", "html", "pdf", "image"])
     sc.add_argument("--json", action="store_true")
     sc.set_defaults(fn=cmd_scan)
+
+    hk = (
+        sub.add_parser("hook", help="agent hooks")
+        .add_subparsers(dest="sub", required=True)
+        .add_parser("claude-code")
+    )
+    hk.add_argument("--url", default=None, help="a running detector service; omit to run in-process")
+    hk.add_argument("--on-error", default="closed", choices=["open", "closed"])
+    hk.add_argument("--print-settings", action="store_true", help="print the settings.json hooks block")
+    hk.set_defaults(fn=cmd_hook)
 
     eval_sub = sub.add_parser("eval").add_subparsers(dest="sub", required=True)
     e = eval_sub.add_parser("run", help="V2: the Acme Support lab")
