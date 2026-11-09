@@ -18,6 +18,9 @@ from pathlib import Path
 
 import markdown
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import scoreboard  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 REPO = "https://github.com/aaronsunny007/Warden"
 PAGES = [
@@ -100,7 +103,7 @@ def main() -> int:
     out = Path(sys.argv[1])
     pdf = Path(sys.argv[2]) if len(sys.argv) > 2 else None
     out.mkdir(parents=True, exist_ok=True)
-    nav = '<a href="./">Home</a>' + "".join(
+    nav = '<a href="./">Home</a><a href="scoreboard.html">Scoreboard</a>' + "".join(
         f'<a href="{slug}.html">{label}</a>' for _, slug, label in PAGES if slug != "index-readme"
     )
     if pdf and pdf.exists():
@@ -118,10 +121,12 @@ def main() -> int:
         "servers.</p><ul><li><a href=\"warden-report.pdf\">The report (PDF)</a></li>"
         "<li><a href=\"design.html\">Design</a> · <a href=\"threat-model.html\">Threat model</a> · "
         "<a href=\"decisions.html\">Decisions</a> · <a href=\"owasp-mapping.html\">OWASP mapping</a></li>"
+        "<li><a href=\"scoreboard.html\">Scoreboard: every score, the rules, and a live check of the commitments</a></li>"
         "<li><a href=\"index-readme.html\">Full README</a></li>"
         '<li><a href="https://github.com/aaronsunny007/Warden">Source on GitHub</a></li></ul>'
         + locked_summary()
     )
+    (out / "scoreboard.html").write_text(shell("Scoreboard", scoreboard.build(ROOT), nav), encoding="utf-8")
     (out / "index.html").write_text(shell("Warden", home, nav), encoding="utf-8")
     (out / ".nojekyll").write_text("", encoding="utf-8")
     return 0
