@@ -99,6 +99,22 @@ def cmd_hook(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_toolout(a: argparse.Namespace) -> int:
+    from warden.eval.toolout import run
+
+    res = run(Path(a.out), Path(a.md) if a.md else None)
+    print(
+        json.dumps(
+            {
+                k: res["full_pipeline"][k]
+                for k in ("attack_blocked", "attack_flagged", "benign_blocked", "benign_flagged")
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def cmd_locked(a: argparse.Namespace) -> int:
     from warden.eval.locked import run
 
@@ -217,6 +233,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="exit 3 if B3/B4 miss the H1 targets (CI merge gate)",
     )
     e.set_defaults(fn=cmd_eval)
+
+    to = eval_sub.add_parser(
+        "toolout", help="score the tool-output injection set once (needs WARDEN_UNLOCK_TOOLOUT=1)"
+    )
+    to.add_argument("--out", default="docs/results/toolout.json")
+    to.add_argument("--md", default="docs/results/toolout.md")
+    to.set_defaults(fn=cmd_toolout)
 
     lk = eval_sub.add_parser("locked", help="score the locked test splits once (needs WARDEN_UNLOCK_TEST=1)")
     lk.add_argument("--out", default="../docs/results/locked-test.json")
