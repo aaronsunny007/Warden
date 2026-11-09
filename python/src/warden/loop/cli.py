@@ -92,6 +92,41 @@ def _run_rq2(a: argparse.Namespace) -> int:
     return 0
 
 
+def _miss_add(a: argparse.Namespace) -> int:
+    from warden.loop.misses import MissLog
+
+    text = Path(a.file).read_text(encoding="utf-8") if a.file else a.text
+    m = MissLog(a.log).add(text, channel=a.channel, source=a.source, goal=a.goal, note=a.note)
+    print(json.dumps({"logged": m is not None, "id": m.id if m else None}))
+    return 0
+
+
+def _miss_import(a: argparse.Namespace) -> int:
+    """Log the attacks a scored set let through (as listed in its results file)."""
+    from warden.eval import toolout
+    from warden.loop.misses import MissLog
+
+    results = json.loads(Path(a.results).read_text())
+    ids = set(results[a.view]["misses"])
+    log, n = MissLog(a.log), 0
+    for r in toolout.load():
+        if r["id"] in ids and log.add(
+            r["text"], source="eval:toolout", goal=r["goal"], note=f"{r['carrier']}/{r['technique']}"
+        ):
+            n += 1
+    print(json.dumps({"imported": n, "of": len(ids)}))
+    return 0
+
+
+def _learn(a: argparse.Namespace) -> int:
+    from warden.loop import misses
+
+    outcomes = misses.learn(misses.MissLog(a.log).all())
+    misses.write_report(outcomes, Path(a.out))
+    print(misses.to_markdown(outcomes))
+    return 0
+
+
 def register(sub: Any) -> None:
     loop = sub.add_parser("loop", help="the self-improving defence loop").add_subparsers(
         dest="sub", required=True
@@ -109,6 +144,28 @@ def register(sub: Any) -> None:
         "--blend-rate", type=float, default=0.0, help="RQ2: fraction of attacks that blend in benign phrasing"
     )
     r.set_defaults(fn=_run_loop)
+
+    ms = loop.add_parser("miss", help="the miss log").add_subparsers(dest="miss_sub", required=True)
+    ma = ms.add_parser("add", help="log an attack that was let through")
+    ma.add_argument("--log", default="miss-log.jsonl")
+    ma.add_argument("--text", default="")
+    ma.add_argument("--file")
+    ma.add_argument("--channel", default="output", choices=["description", "arguments", "output"])
+    ma.add_argument("--source", default="report")
+    ma.add_argument("--goal", default="unspecified")
+    ma.add_argument("--note", default="")
+    ma.set_defaults(fn=_miss_add)
+    mi = ms.add_parser("import-toolout", help="log the attacks a toolout results file says were passed")
+    mi.add_argument("--log", default="miss-log.jsonl")
+    mi.add_argument("--results", default="docs/results/toolout.json")
+    mi.add_argument("--view", default="full_pipeline", choices=["raw_cascade", "full_pipeline"])
+    mi.set_defaults(fn=_miss_import)
+    ln = loop.add_parser(
+        "learn", help="propose rules for logged misses and run them through the offline gate"
+    )
+    ln.add_argument("--log", default="miss-log.jsonl")
+    ln.add_argument("--out", default="learned")
+    ln.set_defaults(fn=_learn)
 
     rq2 = loop.add_parser("rq2", help="induced self-DoS: gated vs ungated")
     rq2.add_argument("--rounds", type=int, default=4)

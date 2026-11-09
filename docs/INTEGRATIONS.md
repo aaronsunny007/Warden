@@ -79,3 +79,25 @@ disconnects (checked); it has not been run against a real Claude Desktop or Curs
 `bundle` there are **no rules**, so for real protection load a signed policy bundle. The steps to
 build one from `policies/baseline.rules.json` are in `infra/compose/config/init-policy.sh`, and the
 compose lab in `infra/compose` shows the complete setup.
+
+## Learning from mistakes
+
+Every attack that got through can be logged and turned into a proposed rule that has to survive the validation gate.
+
+```bash
+# set WARDEN_MISS_LOG=/var/lib/warden/miss-log.jsonl to accept POST /v1/miss {"text": "...", "channel": "output"}
+warden loop miss add --text "the injected text that was let through" --channel output
+warden loop learn --log miss-log.jsonl --out learned     # -> learned/learning-report.md and proposed-rules.json
+```
+
+What this does and does not do:
+
+- Blue-team templates propose a rule; the offline gate stages G1 (lint), G2 (benign replay, at most 0.1% firing),
+  G4 (blocks the miss) and G5 (survives obfuscated variants) run. Live stages G3, G6, G7 need the lab stack and G8
+  is a human; the report says they did not run. Proposals are in **shadow** mode and nothing here enforces.
+- Template rules are narrow phrase matchers. They stop repeats and obfuscated variants of that text, not new
+  paraphrases, so they do not fix the detector's recall; they close known holes quickly.
+- A rule that would fire on benign traffic is rejected at G2. The hourly new-rule budget (6) defers the rest.
+- `/v1/miss` is off unless `WARDEN_MISS_LOG` is set, uses the service token when one is configured, and only
+  feeds this queue. Anyone who can call it can fill the queue, which is why nothing in it is trusted without the gate.
+- A miss taken from a scored set spends that set. Check a learned rule on fresh data, not on the set it came from.

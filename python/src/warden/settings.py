@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     index: str = "memory"  # memory | pgvector
     cascade: str = "full"  # full | l2only (baseline B2: a classifier on outputs, nothing else)
     allow_corpus_writes: bool = False
+    miss_log: str = (
+        ""  # JSONL path; when set, POST /v1/miss appends reported misses (the learn-from-mistakes input)
+    )
     service_token: str = ""
 
     # Gateway / control plane

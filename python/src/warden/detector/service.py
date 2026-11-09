@@ -82,6 +82,13 @@ class ScanResponse(DetectResponse):
     notes: list[str]
 
 
+class MissReport(BaseModel):
+    text: str = Field(max_length=20000)
+    channel: str = "output"
+    note: str = Field(default="", max_length=500)
+    goal: str = Field(default="unspecified", max_length=64)
+
+
 class CorpusAdd(BaseModel):
     items: list[dict[str, str]]
 
@@ -235,6 +242,25 @@ def create_app(settings: Settings | None = None, cascade: Cascade | None = None)
         ]
         cas().load_corpus(items)
         return {"added": len(items)}
+
+    @app.post("/v1/miss")
+    def report_miss(body: MissReport, authorization: str = Header(default="")) -> dict[str, Any]:
+        """Report an attack that was let through. It only feeds the learn-from-mistakes queue: any rule
+        proposed from it still has to clear the validation gate and a human approval."""
+        if not s.miss_log:
+            raise HTTPException(403, "miss reporting is disabled; set WARDEN_MISS_LOG to a file path")
+        if s.service_token and not hmac.compare_digest(authorization, f"Bearer {s.service_token}"):
+            raise HTTPException(401, "unauthorized")
+        from warden.loop.misses import MissLog
+
+        log = MissLog(s.miss_log)
+        if len(log.all()) >= 10_000:
+            raise HTTPException(429, "miss log is full; run `warden loop learn` and rotate it")
+        try:
+            m = log.add(body.text, channel=body.channel, source="report", goal=body.goal, note=body.note)
+        except ValueError as e:
+            raise HTTPException(422, str(e)) from e
+        return {"logged": m is not None, "id": m.id if m else None, "duplicate": m is None}
 
     @app.get("/metrics")
     def metrics() -> PlainTextResponse:
