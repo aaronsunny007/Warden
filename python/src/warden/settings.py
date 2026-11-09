@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     embed_model: str = ""  # e.g. sentence-transformers/all-MiniLM-L6-v2; empty = offline hashing embedder
     l2_onnx_dir: str = ""  # directory with model.onnx + tokenizer.json (+ labels.json)
     l2_mode: str = "lite"  # lite | onnx | off
+    l2_extra_train: str = (
+        ""  # optional JSONL of {"text", "label": 0|1} added to the lite classifier's training data
+    )
     ollama_url: str = "http://127.0.0.1:11434"
     judge_model: str = ""  # e.g. qwen2.5:7b; empty disables L3
     judge_timeout_s: float = 8.0
@@ -34,11 +37,15 @@ class Settings(BaseSettings):
     index: str = "memory"  # memory | pgvector
     cascade: str = "full"  # full | l2only (baseline B2: a classifier on outputs, nothing else)
     allow_corpus_writes: bool = False
+    miss_log: str = (
+        ""  # JSONL path; when set, POST /v1/miss appends reported misses (the learn-from-mistakes input)
+    )
     service_token: str = ""
 
     # Gateway / control plane
     gateway_url: str = "http://127.0.0.1:8787"
     gateway_admin_token: str = ""
+    control_token: str = ""  # bearer token for the control plane /v1 API; empty = open (dev only)
     lab_url: str = "http://127.0.0.1:8790"
     policy_cli: str = ""  # path to warden-policy CLI (dist/cli.js); auto-detected if empty
     signing_key: str = ""  # path to the Ed25519 private key PEM used to sign approved bundles

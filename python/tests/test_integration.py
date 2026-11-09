@@ -253,6 +253,16 @@ def test_control_plane_reads_and_approves(tmp_path: Path) -> None:
     settings = Settings(database_url=url, signing_key=str(key), signing_key_id="cp")
     from warden.control.service import create_app
 
+    # With a token set, every /v1 route refuses a missing or wrong bearer token; /healthz stays open.
+    locked = Settings(database_url=url, signing_key=str(key), signing_key_id="cp", control_token="s3cret")
+    with TestClient(create_app(locked)) as guarded:
+        assert guarded.get("/healthz").status_code == 200
+        assert guarded.get("/v1/stats").status_code == 401
+        assert guarded.get("/v1/stats", headers={"Authorization": "Bearer nope"}).status_code == 401
+        bad = guarded.post("/v1/candidates/cmp1/approve", json={"approver": "x"})
+        assert bad.status_code == 401
+        assert guarded.get("/v1/stats", headers={"Authorization": "Bearer s3cret"}).status_code == 200
+
     with TestClient(create_app(settings)) as client:
         assert client.get("/v1/stats").json()["bypasses"] == 1
         assert client.get("/v1/campaigns", params={"bypass_only": True}).json()[0]["id"] == "cmp1"

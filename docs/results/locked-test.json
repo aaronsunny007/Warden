@@ -1,0 +1,1037 @@
+{
+  "embedder": "",
+  "l2_mode": "lite",
+  "judge": false,
+  "cascade_full": {
+    "test_iid": {
+      "attack_blocked": {
+        "hits": 44,
+        "n": 56,
+        "rate": 0.7857,
+        "ci95": [
+          0.6618,
+          0.8729
+        ]
+      },
+      "attack_flagged": {
+        "hits": 55,
+        "n": 56,
+        "rate": 0.9821,
+        "ci95": [
+          0.9055,
+          0.9968
+        ]
+      },
+      "benign_blocked": {
+        "hits": 1,
+        "n": 53,
+        "rate": 0.0189,
+        "ci95": [
+          0.0033,
+          0.0994
+        ]
+      },
+      "benign_flagged": {
+        "hits": 6,
+        "n": 53,
+        "rate": 0.1132,
+        "ci95": [
+          0.0529,
+          0.2258
+        ]
+      },
+      "attack_flagged_by_family": {
+        "agentdojo": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "authority": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "delayed": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "hidden_markup": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "markdown_exfil": {
+          "hits": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7935
+          ]
+        },
+        "multilingual": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "override": {
+          "hits": 10,
+          "n": 10,
+          "rate": 1.0,
+          "ci95": [
+            0.7225,
+            1.0
+          ]
+        },
+        "polite_ps": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        },
+        "role_tags": {
+          "hits": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ]
+        },
+        "tool_poison": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        }
+      }
+    },
+    "test_ood": {
+      "attack_blocked": {
+        "hits": 7,
+        "n": 18,
+        "rate": 0.3889,
+        "ci95": [
+          0.2031,
+          0.6138
+        ]
+      },
+      "attack_flagged": {
+        "hits": 18,
+        "n": 18,
+        "rate": 1.0,
+        "ci95": [
+          0.8241,
+          1.0
+        ]
+      },
+      "attack_flagged_by_family": {
+        "compliance": {
+          "hits": 16,
+          "n": 16,
+          "rate": 1.0,
+          "ci95": [
+            0.8064,
+            1.0
+          ]
+        },
+        "encoded": {
+          "hits": 2,
+          "n": 2,
+          "rate": 1.0,
+          "ci95": [
+            0.3424,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  "l2_only": {
+    "test_iid": {
+      "attack_blocked": {
+        "hits": 16,
+        "n": 56,
+        "rate": 0.2857,
+        "ci95": [
+          0.1842,
+          0.4148
+        ]
+      },
+      "attack_flagged": {
+        "hits": 56,
+        "n": 56,
+        "rate": 1.0,
+        "ci95": [
+          0.9358,
+          1.0
+        ]
+      },
+      "benign_blocked": {
+        "hits": 0,
+        "n": 53,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0676
+        ]
+      },
+      "benign_flagged": {
+        "hits": 12,
+        "n": 53,
+        "rate": 0.2264,
+        "ci95": [
+          0.1345,
+          0.3553
+        ]
+      },
+      "attack_flagged_by_family": {
+        "agentdojo": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "authority": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "delayed": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "hidden_markup": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "markdown_exfil": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "multilingual": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "override": {
+          "hits": 10,
+          "n": 10,
+          "rate": 1.0,
+          "ci95": [
+            0.7225,
+            1.0
+          ]
+        },
+        "polite_ps": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        },
+        "role_tags": {
+          "hits": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ]
+        },
+        "tool_poison": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        }
+      }
+    },
+    "test_ood": {
+      "attack_blocked": {
+        "hits": 0,
+        "n": 18,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1759
+        ]
+      },
+      "attack_flagged": {
+        "hits": 18,
+        "n": 18,
+        "rate": 1.0,
+        "ci95": [
+          0.8241,
+          1.0
+        ]
+      },
+      "attack_flagged_by_family": {
+        "compliance": {
+          "hits": 16,
+          "n": 16,
+          "rate": 1.0,
+          "ci95": [
+            0.8064,
+            1.0
+          ]
+        },
+        "encoded": {
+          "hits": 2,
+          "n": 2,
+          "rate": 1.0,
+          "ci95": [
+            0.3424,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  "cascade_full+deberta": {
+    "test_iid": {
+      "attack_blocked": {
+        "hits": 42,
+        "n": 56,
+        "rate": 0.75,
+        "ci95": [
+          0.6231,
+          0.8448
+        ]
+      },
+      "attack_flagged": {
+        "hits": 55,
+        "n": 56,
+        "rate": 0.9821,
+        "ci95": [
+          0.9055,
+          0.9968
+        ]
+      },
+      "benign_blocked": {
+        "hits": 1,
+        "n": 53,
+        "rate": 0.0189,
+        "ci95": [
+          0.0033,
+          0.0994
+        ]
+      },
+      "benign_flagged": {
+        "hits": 6,
+        "n": 53,
+        "rate": 0.1132,
+        "ci95": [
+          0.0529,
+          0.2258
+        ]
+      },
+      "attack_flagged_by_family": {
+        "agentdojo": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "authority": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "delayed": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "hidden_markup": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "markdown_exfil": {
+          "hits": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7935
+          ]
+        },
+        "multilingual": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "override": {
+          "hits": 10,
+          "n": 10,
+          "rate": 1.0,
+          "ci95": [
+            0.7225,
+            1.0
+          ]
+        },
+        "polite_ps": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        },
+        "role_tags": {
+          "hits": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ]
+        },
+        "tool_poison": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        }
+      }
+    },
+    "test_ood": {
+      "attack_blocked": {
+        "hits": 7,
+        "n": 18,
+        "rate": 0.3889,
+        "ci95": [
+          0.2031,
+          0.6138
+        ]
+      },
+      "attack_flagged": {
+        "hits": 18,
+        "n": 18,
+        "rate": 1.0,
+        "ci95": [
+          0.8241,
+          1.0
+        ]
+      },
+      "attack_flagged_by_family": {
+        "compliance": {
+          "hits": 16,
+          "n": 16,
+          "rate": 1.0,
+          "ci95": [
+            0.8064,
+            1.0
+          ]
+        },
+        "encoded": {
+          "hits": 2,
+          "n": 2,
+          "rate": 1.0,
+          "ci95": [
+            0.3424,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  "l2_only+deberta": {
+    "test_iid": {
+      "attack_blocked": {
+        "hits": 0,
+        "n": 56,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0642
+        ]
+      },
+      "attack_flagged": {
+        "hits": 56,
+        "n": 56,
+        "rate": 1.0,
+        "ci95": [
+          0.9358,
+          1.0
+        ]
+      },
+      "benign_blocked": {
+        "hits": 0,
+        "n": 53,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0676
+        ]
+      },
+      "benign_flagged": {
+        "hits": 53,
+        "n": 53,
+        "rate": 1.0,
+        "ci95": [
+          0.9324,
+          1.0
+        ]
+      },
+      "attack_flagged_by_family": {
+        "agentdojo": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "authority": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "delayed": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "hidden_markup": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "markdown_exfil": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "multilingual": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "override": {
+          "hits": 10,
+          "n": 10,
+          "rate": 1.0,
+          "ci95": [
+            0.7225,
+            1.0
+          ]
+        },
+        "polite_ps": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        },
+        "role_tags": {
+          "hits": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ]
+        },
+        "tool_poison": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        }
+      }
+    },
+    "test_ood": {
+      "attack_blocked": {
+        "hits": 0,
+        "n": 18,
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.1759
+        ]
+      },
+      "attack_flagged": {
+        "hits": 18,
+        "n": 18,
+        "rate": 1.0,
+        "ci95": [
+          0.8241,
+          1.0
+        ]
+      },
+      "attack_flagged_by_family": {
+        "compliance": {
+          "hits": 16,
+          "n": 16,
+          "rate": 1.0,
+          "ci95": [
+            0.8064,
+            1.0
+          ]
+        },
+        "encoded": {
+          "hits": 2,
+          "n": 2,
+          "rate": 1.0,
+          "ci95": [
+            0.3424,
+            1.0
+          ]
+        }
+      }
+    }
+  },
+  "cascade_full+scratch": {
+    "test_iid": {
+      "attack_blocked": {
+        "hits": 55,
+        "n": 56,
+        "rate": 0.9821,
+        "ci95": [
+          0.9055,
+          0.9968
+        ]
+      },
+      "attack_flagged": {
+        "hits": 55,
+        "n": 56,
+        "rate": 0.9821,
+        "ci95": [
+          0.9055,
+          0.9968
+        ]
+      },
+      "benign_blocked": {
+        "hits": 1,
+        "n": 53,
+        "rate": 0.0189,
+        "ci95": [
+          0.0033,
+          0.0994
+        ]
+      },
+      "benign_flagged": {
+        "hits": 1,
+        "n": 53,
+        "rate": 0.0189,
+        "ci95": [
+          0.0033,
+          0.0994
+        ]
+      },
+      "attack_flagged_by_family": {
+        "agentdojo": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "authority": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "delayed": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "hidden_markup": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "markdown_exfil": {
+          "hits": 0,
+          "n": 1,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.7935
+          ]
+        },
+        "multilingual": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "override": {
+          "hits": 10,
+          "n": 10,
+          "rate": 1.0,
+          "ci95": [
+            0.7225,
+            1.0
+          ]
+        },
+        "polite_ps": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        },
+        "role_tags": {
+          "hits": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ]
+        },
+        "tool_poison": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        }
+      }
+    },
+    "test_ood": {
+      "attack_blocked": {
+        "hits": 16,
+        "n": 18,
+        "rate": 0.8889,
+        "ci95": [
+          0.672,
+          0.969
+        ]
+      },
+      "attack_flagged": {
+        "hits": 16,
+        "n": 18,
+        "rate": 0.8889,
+        "ci95": [
+          0.672,
+          0.969
+        ]
+      },
+      "attack_flagged_by_family": {
+        "compliance": {
+          "hits": 16,
+          "n": 16,
+          "rate": 1.0,
+          "ci95": [
+            0.8064,
+            1.0
+          ]
+        },
+        "encoded": {
+          "hits": 0,
+          "n": 2,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.6576
+          ]
+        }
+      }
+    }
+  },
+  "l2_only+scratch": {
+    "test_iid": {
+      "attack_blocked": {
+        "hits": 53,
+        "n": 56,
+        "rate": 0.9464,
+        "ci95": [
+          0.8539,
+          0.9816
+        ]
+      },
+      "attack_flagged": {
+        "hits": 55,
+        "n": 56,
+        "rate": 0.9821,
+        "ci95": [
+          0.9055,
+          0.9968
+        ]
+      },
+      "benign_blocked": {
+        "hits": 1,
+        "n": 53,
+        "rate": 0.0189,
+        "ci95": [
+          0.0033,
+          0.0994
+        ]
+      },
+      "benign_flagged": {
+        "hits": 2,
+        "n": 53,
+        "rate": 0.0377,
+        "ci95": [
+          0.0104,
+          0.1275
+        ]
+      },
+      "attack_flagged_by_family": {
+        "agentdojo": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "authority": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "delayed": {
+          "hits": 6,
+          "n": 6,
+          "rate": 1.0,
+          "ci95": [
+            0.6097,
+            1.0
+          ]
+        },
+        "hidden_markup": {
+          "hits": 5,
+          "n": 5,
+          "rate": 1.0,
+          "ci95": [
+            0.5655,
+            1.0
+          ]
+        },
+        "markdown_exfil": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "multilingual": {
+          "hits": 1,
+          "n": 1,
+          "rate": 1.0,
+          "ci95": [
+            0.2065,
+            1.0
+          ]
+        },
+        "override": {
+          "hits": 9,
+          "n": 10,
+          "rate": 0.9,
+          "ci95": [
+            0.5958,
+            0.9821
+          ]
+        },
+        "polite_ps": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        },
+        "role_tags": {
+          "hits": 8,
+          "n": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ]
+        },
+        "tool_poison": {
+          "hits": 7,
+          "n": 7,
+          "rate": 1.0,
+          "ci95": [
+            0.6457,
+            1.0
+          ]
+        }
+      }
+    },
+    "test_ood": {
+      "attack_blocked": {
+        "hits": 16,
+        "n": 18,
+        "rate": 0.8889,
+        "ci95": [
+          0.672,
+          0.969
+        ]
+      },
+      "attack_flagged": {
+        "hits": 16,
+        "n": 18,
+        "rate": 0.8889,
+        "ci95": [
+          0.672,
+          0.969
+        ]
+      },
+      "attack_flagged_by_family": {
+        "compliance": {
+          "hits": 16,
+          "n": 16,
+          "rate": 1.0,
+          "ci95": [
+            0.8064,
+            1.0
+          ]
+        },
+        "encoded": {
+          "hits": 0,
+          "n": 2,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.6576
+          ]
+        }
+      }
+    }
+  }
+}

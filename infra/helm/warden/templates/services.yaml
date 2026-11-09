@@ -106,6 +106,9 @@ spec:
             - name: WARDEN_GATEWAY_ADMIN_TOKEN
               valueFrom:
                 secretKeyRef: { name: {{ include "warden.secretName" . }}, key: admin-token }
+            - name: WARDEN_CONTROL_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ include "warden.secretName" . }}, key: admin-token }
             {{- end }}
           ports: [{ name: http, containerPort: 8008 }]
           readinessProbe:

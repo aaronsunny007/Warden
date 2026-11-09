@@ -39,6 +39,21 @@ See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the full trust model.
 No secrets are committed to this repository. Signing keys are generated at runtime into volumes;
 admin tokens come from the environment. CI runs gitleaks, Semgrep and Trivy on every push.
 
+## Deployment hardening
+
+These are properties of the reference deployment, not bugs, but they matter before you expose it:
+
+- **The admin API and the control plane are open when no token is set.** `WARDEN_ADMIN_TOKEN` is empty by
+  default in the compose file and the Helm chart (compose and Helm pass the same value to the control plane
+  as `WARDEN_CONTROL_TOKEN`). Both services log a warning at start when it is empty. Set a token, and do not
+  publish the admin or control ports. With a token, every control-plane `/v1` route, including
+  `.../approve`, needs `Authorization: Bearer <token>`; `approvedBy` is still caller-supplied text, not an
+  authenticated identity.
+- **The detector service has no authentication** apart from the optional corpus-write token. Keep it on a
+  private network; the gateway is its only client.
+- **The dashboard acts as the operator.** It adds the token to proxied calls on the server (`proxy.ts`), so
+  whoever can open the dashboard can approve rules. Put it behind your own login or a private network.
+
 ## Responsible use
 
 Use the learning loop and red-team tooling against the bundled lab only. Do not point them at

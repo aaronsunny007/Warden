@@ -3,6 +3,8 @@
 warden detector serve [--port 8000]
 warden eval run --experiment rq1 --baselines B0,B1,B2,B3 [--agent simulated|ollama:qwen2.5:7b] [--templates a,b] [--seeds 1] [--sample N]
 warden corpus verify-lock
+warden hook claude-code [--url URL] [--print-settings]   Claude Code hook (stdin -> stdout)
+warden scan FILE [--kind auto|text|html|pdf|image] [--json]   find text hidden in a file
 warden audit consume --brokers localhost:9092
 warden loop run ...        (see `warden loop --help`)
 warden gate ...            (see `warden gate --help`)
@@ -16,6 +18,8 @@ import json
 import logging
 import sys
 from pathlib import Path
+
+_RESULTS = Path(__file__).resolve().parents[3] / "docs" / "results"
 
 
 def _csv(v: str | None) -> list[str] | None:
@@ -57,11 +61,84 @@ def cmd_eval(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_scan(a: argparse.Namespace) -> int:
+    from warden.detector import hidden
+
+    try:
+        rep = hidden.scan(Path(a.file).read_bytes(), a.kind)
+    except ImportError:
+        print("file scanning needs the 'files' extra: pip install 'warden[files]'", file=sys.stderr)
+        return 2
+    if a.json:
+        out = {
+            "severity": rep.severity,
+            "findings": [f.__dict__ for f in rep.findings],
+            "hidden_text": rep.hidden_text,
+            "notes": rep.notes,
+        }
+        print(json.dumps(out, indent=2))
+    else:
+        print(f"{a.file}: severity {rep.severity}, {len(rep.findings)} finding(s)")
+        for f in rep.findings:
+            where = f" [{f.location}]" if f.location else ""
+            print(f"  {f.severity:6} {f.kind}{where}: {f.detail}")
+            if f.decoded:
+                print(f"         hidden text: {f.decoded[:200]!r}")
+        for n in rep.notes:
+            print(f"  note: {n}")
+    return 1 if rep.severity == "high" else 0
+
+
+def cmd_hook(a: argparse.Namespace) -> int:
+    from warden.adapters import claude_code
+    from warden.adapters.client import WardenClient
+
+    if a.print_settings:
+        print(json.dumps(claude_code.settings_snippet(), indent=2))
+        return 0
+    client = WardenClient(a.url, on_error=a.on_error)
+    print(claude_code.run(sys.stdin.read(), client))
+    return 0
+
+
+def cmd_toolout(a: argparse.Namespace) -> int:
+    from warden.eval.toolout import run
+
+    res = run(Path(a.out), Path(a.md) if a.md else None)
+    print(
+        json.dumps(
+            {
+                k: res["full_pipeline"][k]
+                for k in ("attack_blocked", "attack_flagged", "benign_blocked", "benign_flagged")
+            },
+            indent=2,
+        )
+    )
+    return 0
+
+
 def cmd_locked(a: argparse.Namespace) -> int:
     from warden.eval.locked import run
 
     onnx = dict(x.split("=", 1) for x in a.onnx or [])
     print(json.dumps(run(Path(a.out), onnx), indent=2))
+    return 0
+
+
+def cmd_locked_public(a: argparse.Namespace) -> int:
+    from warden.eval.locked_public import run
+
+    onnx = dict(x.split("=", 1) for x in a.onnx or [])
+    print(json.dumps(run(Path(a.out), onnx), indent=2))
+    return 0
+
+
+def cmd_locked_fresh(a: argparse.Namespace) -> int:
+    from warden.eval.locked_fresh import run
+
+    onnx = dict(x.split("=", 1) for x in a.onnx or [])
+    extra = dict(x.split("=", 1) for x in a.lite_extra or [])
+    print(json.dumps(run(a.split, Path(a.out), onnx, extra), indent=2))
     return 0
 
 
@@ -119,6 +196,24 @@ def build_parser() -> argparse.ArgumentParser:
     d.add_argument("--port", type=int, default=8000)
     d.set_defaults(fn=cmd_detector)
 
+    sc = sub.add_parser(
+        "scan", help="find text hidden in a file (exit 1 when a high-severity finding is present)"
+    )
+    sc.add_argument("file")
+    sc.add_argument("--kind", default="auto", choices=["auto", "text", "html", "pdf", "image"])
+    sc.add_argument("--json", action="store_true")
+    sc.set_defaults(fn=cmd_scan)
+
+    hk = (
+        sub.add_parser("hook", help="agent hooks")
+        .add_subparsers(dest="sub", required=True)
+        .add_parser("claude-code")
+    )
+    hk.add_argument("--url", default=None, help="a running detector service; omit to run in-process")
+    hk.add_argument("--on-error", default="closed", choices=["open", "closed"])
+    hk.add_argument("--print-settings", action="store_true", help="print the settings.json hooks block")
+    hk.set_defaults(fn=cmd_hook)
+
     eval_sub = sub.add_parser("eval").add_subparsers(dest="sub", required=True)
     e = eval_sub.add_parser("run", help="V2: the Acme Support lab")
     e.add_argument("--experiment", default="rq1")
@@ -141,12 +236,39 @@ def build_parser() -> argparse.ArgumentParser:
     )
     e.set_defaults(fn=cmd_eval)
 
+    to = eval_sub.add_parser(
+        "toolout", help="score the tool-output injection set once (needs WARDEN_UNLOCK_TOOLOUT=1)"
+    )
+    to.add_argument("--out", default=str(_RESULTS / "toolout.json"))
+    to.add_argument("--md", default=str(_RESULTS / "toolout.md"))
+    to.set_defaults(fn=cmd_toolout)
+
     lk = eval_sub.add_parser("locked", help="score the locked test splits once (needs WARDEN_UNLOCK_TEST=1)")
     lk.add_argument("--out", default="../docs/results/locked-test.json")
     lk.add_argument(
         "--onnx", action="append", help="TAG=dir of an extra ONNX L2 bundle to score alongside lite"
     )
     lk.set_defaults(fn=cmd_locked)
+
+    lp = eval_sub.add_parser(
+        "locked-public",
+        help="score the public held-out split once (needs WARDEN_UNLOCK_PUBLIC_HELDOUT=1)",
+    )
+    lp.add_argument("--out", default="../docs/results/locked-public.json")
+    lp.add_argument(
+        "--onnx", action="append", help="TAG=dir of an extra ONNX L2 bundle to score alongside lite"
+    )
+    lp.set_defaults(fn=cmd_locked_public)
+
+    lf = eval_sub.add_parser(
+        "locked-fresh",
+        help="score one round-2 fresh split once (needs WARDEN_UNLOCK_FRESH_HELDOUT=1)",
+    )
+    lf.add_argument("--split", required=True, choices=["neuralchemy_test", "jackhhao_test"])
+    lf.add_argument("--out", required=True)
+    lf.add_argument("--onnx", action="append", help="TAG=dir of an ONNX L2 bundle to score")
+    lf.add_argument("--lite-extra", action="append", help="TAG=file.jsonl of extra lite training data")
+    lf.set_defaults(fn=cmd_locked_fresh)
 
     ad = eval_sub.add_parser("agentdojo", help="V1: run an AgentDojo suite through each baseline")
     ad.add_argument("--suite", default="banking", choices=["workspace", "banking", "travel", "slack"])
