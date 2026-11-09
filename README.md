@@ -25,6 +25,28 @@ numbers below as a test of the pipeline, not of detection quality.
 - After retraining on ~4.9k public rows: 89% of attacks blocked on neuralchemy test (same collection, flattering), but on
   jackhhao test (never trained on) the DeBERTa blocked 76% of benign prompts. Cross-dataset generalisation is **not** solved.
 
+## Tool-output injection set (synthetic, scored once)
+
+`data/toolout` holds 720 items shaped like tool outputs (emails, tickets, CRM JSON, CSV, chat logs, calendar
+entries, READMEs, logs, search results, PDF text, web pages), 360 attacks and 360 benign including hard negatives.
+It is written by this project, so it measures these templates, not the wild (`data/toolout/README.md`). Scored once
+(the protocol was committed first): `docs/results/toolout.md`.
+
+| default stack (lite L2, no judge) | full pipeline (hidden scan, then cascade) |
+|---|---|
+| attacks blocked | 66.9% [61.9, 71.6] |
+| attacks blocked or flagged | 93.1% [90.0, 95.2] |
+| benign wrongly blocked | **23.6%** [19.5, 28.3] |
+| benign wrongly blocked or flagged | **73.3%** [68.5, 77.6] |
+
+This is not a good result and it should not be read as one: the default stack wrongly blocks about one ordinary
+tool output in four on this set. The weakest attack techniques are zero-width payloads (20.7% blocked) and base64
+(7.4% blocked) on the raw cascade; the scanner decodes zero-width payloads, but the decoded text is only the first
+60 characters of the instruction, which is a limit of how this set was built. A post-hoc look (not a tuning step)
+shows the false blocks concentrate on emails (20 of 33) and READMEs (17 of 33), which resemble the polite and
+carrier attack families in the dev corpus. The L0 rules layer is not part of this score. The set is spent for
+tuning: fixing these needs a new set.
+
 ## Results (RQ1, simulated victim, seed 1)
 
 1,159 attack cases and 13 benign tasks across 11 attack goals × 8 templates. Wilson 95% intervals.

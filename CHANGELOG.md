@@ -6,6 +6,7 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ### Added
 
+- **Tool-output injection set** (`data/toolout`, 720 synthetic items, protocol committed before scoring) and `warden eval toolout` (write-once). Scored once: 66.9% of attacks blocked, but 23.6% of benign tool outputs wrongly blocked on the default stack. Synthetic and self-authored; see `docs/results/toolout.md`.
 - **Adapters** (`warden.adapters`): `WardenClient` (in-process or HTTP), a LangChain/LangGraph tool guard, and a Claude Code hook (`warden hook claude-code`); recipes in `docs/INTEGRATIONS.md`. Plain-English explanations on every gateway verdict and detector response.
 - **Hidden-content scanner** (`warden.detector.hidden`, `warden scan`, `POST /v1/scan`, `hidden` findings on `/v1/detect`; optional `files` extra): invisible-Unicode payloads, hidden HTML, PDF hidden text/annotations/metadata, image metadata, LSB and low-contrast text via OCR. Unit-tested on constructed fixtures only.
 - `verify` workflow: Helm on a live `kind` cluster, `terraform fmt/init/validate`, DeBERTa L2 fine-tune, a

@@ -19,6 +19,8 @@ import logging
 import sys
 from pathlib import Path
 
+_RESULTS = Path(__file__).resolve().parents[3] / "docs" / "results"
+
 
 def _csv(v: str | None) -> list[str] | None:
     return [x.strip() for x in v.split(",") if x.strip()] if v else None
@@ -237,8 +239,8 @@ def build_parser() -> argparse.ArgumentParser:
     to = eval_sub.add_parser(
         "toolout", help="score the tool-output injection set once (needs WARDEN_UNLOCK_TOOLOUT=1)"
     )
-    to.add_argument("--out", default="docs/results/toolout.json")
-    to.add_argument("--md", default="docs/results/toolout.md")
+    to.add_argument("--out", default=str(_RESULTS / "toolout.json"))
+    to.add_argument("--md", default=str(_RESULTS / "toolout.md"))
     to.set_defaults(fn=cmd_toolout)
 
     lk = eval_sub.add_parser("locked", help="score the locked test splits once (needs WARDEN_UNLOCK_TEST=1)")
