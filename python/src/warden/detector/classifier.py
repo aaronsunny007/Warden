@@ -27,16 +27,19 @@ class Classifier(Protocol):
 
 
 class LiteClassifier:
-    def __init__(self, dim: int = 4096, l2: float = 1e-3, epochs: int = 300, lr: float = 0.5) -> None:
+    def __init__(
+        self, dim: int = 4096, l2: float = 1e-3, epochs: int = 300, lr: float = 0.5, dtype: str = "float64"
+    ) -> None:
         self._emb = HashingEmbedder(dim)
         self.dim = dim
         self.l2, self.epochs, self.lr = l2, epochs, lr
+        self.dtype = np.dtype(dtype)  # float32 halves the memory of a large training set
         self.w = np.zeros(dim, dtype=np.float64)
         self.b = 0.0
         self.name = f"lite-logreg-{dim}"
 
     def fit(self, texts: list[str], labels: list[int], seed: int = 0) -> LiteClassifier:
-        x = self._emb.embed(texts).astype(np.float64)
+        x = self._emb.embed(texts).astype(self.dtype)
         y = np.asarray(labels, dtype=np.float64)
         # Balance classes so a skewed corpus does not bias the intercept.
         pos = max(1.0, float(y.sum()))
@@ -46,9 +49,9 @@ class LiteClassifier:
         self.w = rng.normal(0, 0.01, self.dim)
         self.b = 0.0
         for _ in range(self.epochs):
-            p = 1 / (1 + np.exp(-(x @ self.w + self.b)))
+            p = 1 / (1 + np.exp(-(x @ self.w.astype(self.dtype) + self.b)))
             g = (p - y) * sw
-            self.w -= self.lr * (x.T @ g / len(y) + self.l2 * self.w)
+            self.w -= self.lr * (x.T @ g.astype(self.dtype) / len(y) + self.l2 * self.w)
             self.b -= self.lr * float(g.mean())
         return self
 

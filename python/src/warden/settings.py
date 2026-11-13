@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     l1_floor: float = 0.22
     band_low: float = 0.30
     band_high: float = 0.80
+    window_words: int = 64  # long texts are read in windows of this many words; 0 reads them whole
+    max_windows: int = 48
+    l1_ood_sim: float = 0.0
+    # Fitted lite-L2 weights (scripts/train_lite_v2.py). Empty = models/lite-l2-docs.npz when it exists, "none" =
+    # fit on the project corpus at start-up like before.
+    l2_lite_weights: str = ""
     index: str = "memory"  # memory | pgvector
     cascade: str = "full"  # full | l2only (baseline B2: a classifier on outputs, nothing else)
     allow_corpus_writes: bool = False

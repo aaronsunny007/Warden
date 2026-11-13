@@ -78,6 +78,9 @@ def main() -> int:
         help="round 2: also train on the pinned public pool (deepset train + neuralchemy train); "
         "neuralchemy validation is reported separately. Test files are never trained on.",
     )
+    ap.add_argument("--extra-train", nargs="*", default=[], help="JSONL files with text + label (0/1 or attack/benign)")
+    ap.add_argument("--xval-jsonl", default="", help="JSONL of a dataset NOT trained on, for a cross-dataset dev check")
+    ap.add_argument("--xval-n", type=int, default=600)
     ap.add_argument("--pool-cache", default="", help="directory to cache the pool downloads")
     a = ap.parse_args()
     # If a step ever stalls, dump every thread's stack to stderr every 4 minutes instead of hanging silently.
@@ -111,6 +114,14 @@ def main() -> int:
             f"public pool: +{len(pool['train'][0])} train ({sum(pool['train'][1])} injection), "
             f"validation {len(pool_val[0])}; train now {len(x_tr)}"
         )
+
+    for f in a.extra_train:
+        for line in Path(f).read_text(encoding="utf-8").split("\n"):
+            if line.strip():
+                r = json.loads(line)
+                x_tr.append(r["text"])
+                y_tr.append(int(r["label"] in (1, "attack", "injection")))
+        print(f"extra train {f}: train now {len(x_tr)} ({sum(y_tr)} injection)")
 
     tok = AutoTokenizer.from_pretrained(a.model)
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -205,6 +216,19 @@ def main() -> int:
         pool_m = _metrics(pool_val[1], [int(p >= 0.5) for p in predict(pool_val[0])])
         print("validation (neuralchemy validation): " + json.dumps({k: round(v, 4) for k, v in pool_m.items()}))
 
+    xval_m: dict[str, float] = {}
+    if a.xval_jsonl:
+        import random
+
+        rows = [json.loads(x) for x in Path(a.xval_jsonl).read_text(encoding="utf-8").split("\n") if x.strip()]
+        random.Random(7).shuffle(rows)
+        pos = [r for r in rows if r["label"] in (1, "attack")][: a.xval_n // 2]
+        neg = [r for r in rows if r["label"] in (0, "benign")][: a.xval_n // 2]
+        xt = [r["text"] for r in pos + neg]
+        xy = [1] * len(pos) + [0] * len(neg)
+        xval_m = _metrics(xy, [int(p >= 0.5) for p in predict(xt)])
+        print("cross-dataset dev check (never trained on): " + json.dumps({k: round(v, 4) for k, v in xval_m.items()}))
+
     # Export to ONNX. The cascade's OnnxClassifier feeds input_ids + attention_mask and reads the
     # softmax probability of the "injection" class, so we export exactly those inputs.
     out_dir = Path(a.out)
@@ -250,7 +274,7 @@ def main() -> int:
     (out_dir / "metrics.json").write_text(
         json.dumps(
             {"base_model": a.model, "val": m, "served_val": served_m, "max_torch_vs_served_drift": drift,
-             "epochs": a.epochs, "lr": a.lr, "public_pool": a.public_pool, "pool_val": pool_m}, indent=2)
+             "epochs": a.epochs, "lr": a.lr, "public_pool": a.public_pool, "pool_val": pool_m, "xval": xval_m}, indent=2)
     )
     if m["f1"] < a.min_f1 or served_m["f1"] < a.min_f1 or drift > a.max_drift:
         print(

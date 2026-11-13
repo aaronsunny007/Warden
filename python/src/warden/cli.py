@@ -101,6 +101,14 @@ def cmd_hook(a: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_heldout3(a: argparse.Namespace) -> int:
+    from warden.eval.heldout3 import run
+
+    res = run(Path(a.out), Path(a.md))
+    print(json.dumps(res["n"]))
+    return 0
+
+
 def cmd_toolout(a: argparse.Namespace) -> int:
     from warden.eval.toolout import run
 
@@ -242,6 +250,12 @@ def build_parser() -> argparse.ArgumentParser:
     to.add_argument("--out", default=str(_RESULTS / "toolout.json"))
     to.add_argument("--md", default=str(_RESULTS / "toolout.md"))
     to.set_defaults(fn=cmd_toolout)
+    h3 = eval_sub.add_parser(
+        "heldout3", help="score tool-output v2 and public round 3 once (needs WARDEN_UNLOCK_HELDOUT3=1)"
+    )
+    h3.add_argument("--out", default=str(_RESULTS / "heldout3.json"))
+    h3.add_argument("--md", default=str(_RESULTS / "heldout3.md"))
+    h3.set_defaults(fn=cmd_heldout3)
 
     lk = eval_sub.add_parser("locked", help="score the locked test splits once (needs WARDEN_UNLOCK_TEST=1)")
     lk.add_argument("--out", default="../docs/results/locked-test.json")

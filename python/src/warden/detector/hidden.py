@@ -110,6 +110,27 @@ def _decode_variation(run: str) -> str:
     return s if _printable(s, 0.95) and len(s) >= 3 else ""
 
 
+_B64 = re.compile(r"(?<![A-Za-z0-9+/_-])[A-Za-z0-9+/_-]{32,}={0,2}(?![A-Za-z0-9+/_-])")
+
+
+def _decode_base64(token: str) -> str:
+    """Base64 (standard or URL-safe) that decodes to readable prose, not to a hash, key or binary blob.
+
+    Prose is required (several words, mostly letters) so that tokens, hashes and JWT-like strings are left alone.
+    """
+    t = token.replace("-", "+").replace("_", "/")
+    t += "=" * (-len(t) % 4)
+    try:
+        s = base64.b64decode(t, validate=True).decode("utf-8")
+    except ValueError:
+        return ""
+    words = s.split()
+    letters = sum(c.isalpha() or c.isspace() for c in s)
+    if len(words) >= 4 and _printable(s, 0.98) and letters / len(s) >= 0.7:
+        return s
+    return ""
+
+
 def _script(c: str) -> str:
     if not c.isalpha():
         return ""
@@ -171,6 +192,19 @@ def scan_text(text: str, location: str = "") -> HiddenReport:
                 "variation_selector_payload", sev, f"{len(run)} variation selectors in a row", dec, location
             )
         )
+
+    for m in _B64.finditer(text):
+        dec = _decode_base64(m.group(0))
+        if dec:
+            r.add(
+                Finding(
+                    "base64_payload",
+                    "high",
+                    f"{len(m.group(0))} characters of base64 decode to readable text",
+                    dec,
+                    location,
+                )
+            )
 
     bidi = [c for c in text if ord(c) in _BIDI]
     if bidi:

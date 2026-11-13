@@ -93,6 +93,13 @@ class CorpusAdd(BaseModel):
     items: list[dict[str, str]]
 
 
+def _lite_weights(s: Settings) -> Path | None:
+    if s.l2_lite_weights == "none":
+        return None
+    p = Path(s.l2_lite_weights) if s.l2_lite_weights else s.repo_root / "models" / "lite-l2-docs.npz"
+    return p if p.is_file() else None
+
+
 def build_cascade(s: Settings) -> Cascade:
     embedder = make_embedder(s.embed_model)
     index: VectorIndex = (
@@ -104,6 +111,8 @@ def build_cascade(s: Settings) -> Cascade:
     classifier: Classifier | None = None
     if s.l2_mode == "onnx" and s.l2_onnx_dir:
         classifier = OnnxClassifier(s.l2_onnx_dir)
+    elif s.l2_mode == "lite" and _lite_weights(s) is not None:
+        classifier = LiteClassifier.load(_lite_weights(s))  # type: ignore[arg-type]
     elif s.l2_mode == "lite":
         xs = [e.text for e in dev]
         ys = [1 if e.label == "attack" else 0 for e in dev]
@@ -129,7 +138,15 @@ def build_cascade(s: Settings) -> Cascade:
         index,
         classifier,
         judge,
-        Thresholds(s.l1_k, s.l1_floor, s.band_low, s.band_high),
+        Thresholds(
+            s.l1_k,
+            s.l1_floor,
+            s.band_low,
+            s.band_high,
+            window_words=s.window_words,
+            max_windows=s.max_windows,
+            ood_sim=s.l1_ood_sim,
+        ),
         mode=s.cascade,
     )
     if isinstance(index, MemoryIndex) or len(index) == 0:

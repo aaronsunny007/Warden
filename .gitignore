@@ -27,7 +27,8 @@ build/
 playwright-report/
 test-results/
 /var/
-/models/
+/models/*
+!/models/lite-l2-docs.npz
 *.onnx
 !**/fixtures/**/*.onnx
 dbt_packages/
@@ -41,3 +42,12 @@ graphify-out/cache/
 graphify-out/.graphify_*
 graphify-out/cost.json
 graphify-out/manifest.json
+data/toolout2/.cache/
+data/toolout2/dev.jsonl
+data/toolout2/test.jsonl
+data/toolout2/train.jsonl
+data/heldout/round3/.cache/
+data/heldout/round3/test.jsonl
+data/heldout/round3/train_xtram1.jsonl
+data/heldout/.pool-cache/
+models/l2-*/

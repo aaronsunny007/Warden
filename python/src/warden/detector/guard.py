@@ -27,10 +27,19 @@ def apply_hidden_rule(verdict: str, r: hidden.HiddenReport) -> str:
     return verdict
 
 
+_RANK = {"benign": 0, "uncertain": 1, "malicious": 2}
+
+
 def check_report(
     cascade: Cascade, rep: hidden.HiddenReport, channel: str = "output", risk_tier: str = "read_only"
 ) -> Checked:
     d = cascade.detect(rep.detection_text()[:65536] or " ", channel, risk_tier)
+    if rep.has_payload:
+        # What was hidden is also read on its own: inside a long document it would otherwise be one
+        # sentence among thousands of words, and an encoded payload is exactly what an attacker hides there.
+        h = cascade.detect(rep.hidden_text[:65536], channel, risk_tier)
+        if (_RANK[h.verdict], h.score) > (_RANK[d.verdict], d.score):
+            d = h
     verdict = apply_hidden_rule(d.verdict, rep)
     return Checked(verdict, d.score, d, rep, explain(d, verdict, channel, rep))
 
