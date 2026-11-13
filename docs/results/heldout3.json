@@ -1,0 +1,982 @@
+{
+  "toolout2": {
+    "corpus-lite": {
+      "all attack": {
+        "blocked": {
+          "k": 132,
+          "n": 300,
+          "rate": 0.44,
+          "low": 0.3849,
+          "high": 0.4966
+        },
+        "flagged": {
+          "k": 239,
+          "n": 300,
+          "rate": 0.7967,
+          "low": 0.7475,
+          "high": 0.8383
+        }
+      },
+      "all benign": {
+        "blocked": {
+          "k": 24,
+          "n": 382,
+          "rate": 0.0628,
+          "low": 0.0426,
+          "high": 0.0918
+        },
+        "flagged": {
+          "k": 269,
+          "n": 382,
+          "rate": 0.7042,
+          "low": 0.6566,
+          "high": 0.7477
+        }
+      },
+      "attack: base64": {
+        "blocked": {
+          "k": 8,
+          "n": 20,
+          "rate": 0.4,
+          "low": 0.2188,
+          "high": 0.6134
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "attack: injecagent-base": {
+        "blocked": {
+          "k": 2,
+          "n": 124,
+          "rate": 0.0161,
+          "low": 0.0044,
+          "high": 0.0569
+        },
+        "flagged": {
+          "k": 63,
+          "n": 124,
+          "rate": 0.5081,
+          "low": 0.4212,
+          "high": 0.5945
+        }
+      },
+      "attack: injecagent-enhanced": {
+        "blocked": {
+          "k": 93,
+          "n": 116,
+          "rate": 0.8017,
+          "low": 0.72,
+          "high": 0.8641
+        },
+        "flagged": {
+          "k": 116,
+          "n": 116,
+          "rate": 1.0,
+          "low": 0.9679,
+          "high": 1.0
+        }
+      },
+      "attack: tag_chars": {
+        "blocked": {
+          "k": 17,
+          "n": 20,
+          "rate": 0.85,
+          "low": 0.6396,
+          "high": 0.9476
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "attack: zero_width": {
+        "blocked": {
+          "k": 12,
+          "n": 20,
+          "rate": 0.6,
+          "low": 0.3866,
+          "high": 0.7812
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "benign: doc-changelog": {
+        "blocked": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.4345
+        },
+        "flagged": {
+          "k": 2,
+          "n": 5,
+          "rate": 0.4,
+          "low": 0.1176,
+          "high": 0.7693
+        }
+      },
+      "benign: doc-readme": {
+        "blocked": {
+          "k": 8,
+          "n": 113,
+          "rate": 0.0708,
+          "low": 0.0363,
+          "high": 0.1335
+        },
+        "flagged": {
+          "k": 99,
+          "n": 113,
+          "rate": 0.8761,
+          "low": 0.8027,
+          "high": 0.9247
+        }
+      },
+      "benign: hard-advisory": {
+        "blocked": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        }
+      },
+      "benign: hard-chat": {
+        "blocked": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        },
+        "flagged": {
+          "k": 12,
+          "n": 24,
+          "rate": 0.5,
+          "low": 0.3143,
+          "high": 0.6857
+        }
+      },
+      "benign: hard-human_request": {
+        "blocked": {
+          "k": 1,
+          "n": 24,
+          "rate": 0.0417,
+          "low": 0.0074,
+          "high": 0.2024
+        },
+        "flagged": {
+          "k": 12,
+          "n": 24,
+          "rate": 0.5,
+          "low": 0.3143,
+          "high": 0.6857
+        }
+      },
+      "benign: hard-log": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-meeting": {
+        "blocked": {
+          "k": 2,
+          "n": 24,
+          "rate": 0.0833,
+          "low": 0.0232,
+          "high": 0.2585
+        },
+        "flagged": {
+          "k": 24,
+          "n": 24,
+          "rate": 1.0,
+          "low": 0.862,
+          "high": 1.0
+        }
+      },
+      "benign: hard-policy": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 5,
+          "n": 12,
+          "rate": 0.4167,
+          "low": 0.1933,
+          "high": 0.6805
+        }
+      },
+      "benign: hard-setup": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        }
+      },
+      "benign: hard-ticket": {
+        "blocked": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        },
+        "flagged": {
+          "k": 19,
+          "n": 24,
+          "rate": 0.7917,
+          "low": 0.5953,
+          "high": 0.9076
+        }
+      },
+      "benign: template-benign": {
+        "blocked": {
+          "k": 1,
+          "n": 120,
+          "rate": 0.0083,
+          "low": 0.0015,
+          "high": 0.0457
+        },
+        "flagged": {
+          "k": 72,
+          "n": 120,
+          "rate": 0.6,
+          "low": 0.5106,
+          "high": 0.6832
+        }
+      }
+    },
+    "docs-lite": {
+      "all attack": {
+        "blocked": {
+          "k": 240,
+          "n": 300,
+          "rate": 0.8,
+          "low": 0.7511,
+          "high": 0.8413
+        },
+        "flagged": {
+          "k": 293,
+          "n": 300,
+          "rate": 0.9767,
+          "low": 0.9526,
+          "high": 0.9887
+        }
+      },
+      "all benign": {
+        "blocked": {
+          "k": 25,
+          "n": 382,
+          "rate": 0.0654,
+          "low": 0.0447,
+          "high": 0.0948
+        },
+        "flagged": {
+          "k": 55,
+          "n": 382,
+          "rate": 0.144,
+          "low": 0.1123,
+          "high": 0.1827
+        }
+      },
+      "attack: base64": {
+        "blocked": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "attack: injecagent-base": {
+        "blocked": {
+          "k": 69,
+          "n": 124,
+          "rate": 0.5565,
+          "low": 0.4686,
+          "high": 0.6409
+        },
+        "flagged": {
+          "k": 117,
+          "n": 124,
+          "rate": 0.9435,
+          "low": 0.8881,
+          "high": 0.9724
+        }
+      },
+      "attack: injecagent-enhanced": {
+        "blocked": {
+          "k": 116,
+          "n": 116,
+          "rate": 1.0,
+          "low": 0.9679,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 116,
+          "n": 116,
+          "rate": 1.0,
+          "low": 0.9679,
+          "high": 1.0
+        }
+      },
+      "attack: tag_chars": {
+        "blocked": {
+          "k": 18,
+          "n": 20,
+          "rate": 0.9,
+          "low": 0.699,
+          "high": 0.9721
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "attack: zero_width": {
+        "blocked": {
+          "k": 17,
+          "n": 20,
+          "rate": 0.85,
+          "low": 0.6396,
+          "high": 0.9476
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "benign: doc-changelog": {
+        "blocked": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.4345
+        },
+        "flagged": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.4345
+        }
+      },
+      "benign: doc-readme": {
+        "blocked": {
+          "k": 9,
+          "n": 113,
+          "rate": 0.0796,
+          "low": 0.0425,
+          "high": 0.1445
+        },
+        "flagged": {
+          "k": 9,
+          "n": 113,
+          "rate": 0.0796,
+          "low": 0.0425,
+          "high": 0.1445
+        }
+      },
+      "benign: hard-advisory": {
+        "blocked": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        }
+      },
+      "benign: hard-chat": {
+        "blocked": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        },
+        "flagged": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        }
+      },
+      "benign: hard-human_request": {
+        "blocked": {
+          "k": 1,
+          "n": 24,
+          "rate": 0.0417,
+          "low": 0.0074,
+          "high": 0.2024
+        },
+        "flagged": {
+          "k": 1,
+          "n": 24,
+          "rate": 0.0417,
+          "low": 0.0074,
+          "high": 0.2024
+        }
+      },
+      "benign: hard-log": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-meeting": {
+        "blocked": {
+          "k": 2,
+          "n": 24,
+          "rate": 0.0833,
+          "low": 0.0232,
+          "high": 0.2585
+        },
+        "flagged": {
+          "k": 2,
+          "n": 24,
+          "rate": 0.0833,
+          "low": 0.0232,
+          "high": 0.2585
+        }
+      },
+      "benign: hard-policy": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-setup": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-ticket": {
+        "blocked": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        },
+        "flagged": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        }
+      },
+      "benign: template-benign": {
+        "blocked": {
+          "k": 1,
+          "n": 120,
+          "rate": 0.0083,
+          "low": 0.0015,
+          "high": 0.0457
+        },
+        "flagged": {
+          "k": 31,
+          "n": 120,
+          "rate": 0.2583,
+          "low": 0.1884,
+          "high": 0.3433
+        }
+      }
+    },
+    "deberta": {
+      "all attack": {
+        "blocked": {
+          "k": 285,
+          "n": 300,
+          "rate": 0.95,
+          "low": 0.9192,
+          "high": 0.9695
+        },
+        "flagged": {
+          "k": 287,
+          "n": 300,
+          "rate": 0.9567,
+          "low": 0.9273,
+          "high": 0.9745
+        }
+      },
+      "all benign": {
+        "blocked": {
+          "k": 26,
+          "n": 382,
+          "rate": 0.0681,
+          "low": 0.0469,
+          "high": 0.0979
+        },
+        "flagged": {
+          "k": 27,
+          "n": 382,
+          "rate": 0.0707,
+          "low": 0.049,
+          "high": 0.1009
+        }
+      },
+      "attack: base64": {
+        "blocked": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "attack: injecagent-base": {
+        "blocked": {
+          "k": 109,
+          "n": 124,
+          "rate": 0.879,
+          "low": 0.81,
+          "high": 0.9253
+        },
+        "flagged": {
+          "k": 111,
+          "n": 124,
+          "rate": 0.8952,
+          "low": 0.8289,
+          "high": 0.9377
+        }
+      },
+      "attack: injecagent-enhanced": {
+        "blocked": {
+          "k": 116,
+          "n": 116,
+          "rate": 1.0,
+          "low": 0.9679,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 116,
+          "n": 116,
+          "rate": 1.0,
+          "low": 0.9679,
+          "high": 1.0
+        }
+      },
+      "attack: tag_chars": {
+        "blocked": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "attack: zero_width": {
+        "blocked": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 20,
+          "n": 20,
+          "rate": 1.0,
+          "low": 0.8389,
+          "high": 1.0
+        }
+      },
+      "benign: doc-changelog": {
+        "blocked": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.4345
+        },
+        "flagged": {
+          "k": 0,
+          "n": 5,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.4345
+        }
+      },
+      "benign: doc-readme": {
+        "blocked": {
+          "k": 9,
+          "n": 113,
+          "rate": 0.0796,
+          "low": 0.0425,
+          "high": 0.1445
+        },
+        "flagged": {
+          "k": 9,
+          "n": 113,
+          "rate": 0.0796,
+          "low": 0.0425,
+          "high": 0.1445
+        }
+      },
+      "benign: hard-advisory": {
+        "blocked": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        },
+        "flagged": {
+          "k": 12,
+          "n": 12,
+          "rate": 1.0,
+          "low": 0.7575,
+          "high": 1.0
+        }
+      },
+      "benign: hard-chat": {
+        "blocked": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        },
+        "flagged": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        }
+      },
+      "benign: hard-human_request": {
+        "blocked": {
+          "k": 1,
+          "n": 24,
+          "rate": 0.0417,
+          "low": 0.0074,
+          "high": 0.2024
+        },
+        "flagged": {
+          "k": 1,
+          "n": 24,
+          "rate": 0.0417,
+          "low": 0.0074,
+          "high": 0.2024
+        }
+      },
+      "benign: hard-log": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-meeting": {
+        "blocked": {
+          "k": 2,
+          "n": 24,
+          "rate": 0.0833,
+          "low": 0.0232,
+          "high": 0.2585
+        },
+        "flagged": {
+          "k": 2,
+          "n": 24,
+          "rate": 0.0833,
+          "low": 0.0232,
+          "high": 0.2585
+        }
+      },
+      "benign: hard-policy": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-setup": {
+        "blocked": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        },
+        "flagged": {
+          "k": 0,
+          "n": 12,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.2425
+        }
+      },
+      "benign: hard-ticket": {
+        "blocked": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        },
+        "flagged": {
+          "k": 0,
+          "n": 24,
+          "rate": 0.0,
+          "low": 0.0,
+          "high": 0.138
+        }
+      },
+      "benign: template-benign": {
+        "blocked": {
+          "k": 2,
+          "n": 120,
+          "rate": 0.0167,
+          "low": 0.0046,
+          "high": 0.0587
+        },
+        "flagged": {
+          "k": 3,
+          "n": 120,
+          "rate": 0.025,
+          "low": 0.0085,
+          "high": 0.0709
+        }
+      }
+    }
+  },
+  "round3": {
+    "corpus-lite": {
+      "all attack": {
+        "blocked": {
+          "k": 98,
+          "n": 500,
+          "rate": 0.196,
+          "low": 0.1636,
+          "high": 0.2331
+        },
+        "flagged": {
+          "k": 468,
+          "n": 500,
+          "rate": 0.936,
+          "low": 0.911,
+          "high": 0.9543
+        }
+      },
+      "all benign": {
+        "blocked": {
+          "k": 39,
+          "n": 500,
+          "rate": 0.078,
+          "low": 0.0576,
+          "high": 0.1049
+        },
+        "flagged": {
+          "k": 435,
+          "n": 500,
+          "rate": 0.87,
+          "low": 0.8377,
+          "high": 0.8967
+        }
+      }
+    },
+    "docs-lite": {
+      "all attack": {
+        "blocked": {
+          "k": 94,
+          "n": 500,
+          "rate": 0.188,
+          "low": 0.1562,
+          "high": 0.2246
+        },
+        "flagged": {
+          "k": 94,
+          "n": 500,
+          "rate": 0.188,
+          "low": 0.1562,
+          "high": 0.2246
+        }
+      },
+      "all benign": {
+        "blocked": {
+          "k": 38,
+          "n": 500,
+          "rate": 0.076,
+          "low": 0.0559,
+          "high": 0.1026
+        },
+        "flagged": {
+          "k": 38,
+          "n": 500,
+          "rate": 0.076,
+          "low": 0.0559,
+          "high": 0.1026
+        }
+      }
+    },
+    "deberta": {
+      "all attack": {
+        "blocked": {
+          "k": 307,
+          "n": 500,
+          "rate": 0.614,
+          "low": 0.5706,
+          "high": 0.6556
+        },
+        "flagged": {
+          "k": 345,
+          "n": 500,
+          "rate": 0.69,
+          "low": 0.6481,
+          "high": 0.729
+        }
+      },
+      "all benign": {
+        "blocked": {
+          "k": 98,
+          "n": 500,
+          "rate": 0.196,
+          "low": 0.1636,
+          "high": 0.2331
+        },
+        "flagged": {
+          "k": 120,
+          "n": 500,
+          "rate": 0.24,
+          "low": 0.2046,
+          "high": 0.2793
+        }
+      }
+    }
+  },
+  "n": {
+    "toolout2": 682,
+    "round3": 1000
+  }
+}

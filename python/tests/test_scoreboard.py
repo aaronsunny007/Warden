@@ -23,7 +23,7 @@ def test_all_committed_sets_match_their_commitments() -> None:
 
 
 def test_a_tampered_set_is_flagged(tmp_path: Path) -> None:
-    for sub in ("corpus", "heldout", "toolout"):
+    for sub in ("corpus", "heldout", "toolout", "toolout2"):
         shutil.copytree(ROOT / "data" / sub, tmp_path / "data" / sub)
     f = tmp_path / "data" / "toolout" / "toolout.jsonl"
     f.write_text(f.read_text().replace('"to-a0000"', '"to-a9999"', 1))
@@ -31,6 +31,16 @@ def test_a_tampered_set_is_flagged(tmp_path: Path) -> None:
     assert rows["Tool-output injection set (ids)"] == "MISMATCH"
     assert rows["Tool-output injection set (file)"] == "MISMATCH"
     assert rows["deepset/prompt-injections test"] == "match"
+    assert rows["Tool-output set v2, test manifest"] == "match"
+
+
+def test_a_tampered_v2_manifest_is_flagged(tmp_path: Path) -> None:
+    for sub in ("corpus", "heldout", "toolout", "toolout2"):
+        shutil.copytree(ROOT / "data" / sub, tmp_path / "data" / sub)
+    m = tmp_path / "data" / "toolout2" / "manifest.test.txt"
+    m.write_text(m.read_text() + "extra\n")
+    rows = {r["set"]: r["status"] for r in _mod().checks(tmp_path)}
+    assert rows["Tool-output set v2, test manifest"] == "MISMATCH"
 
 
 def test_page_shows_scores_and_the_rules() -> None:

@@ -50,6 +50,8 @@ def checks(root: Path) -> list[dict[str, str]]:
             rows.append((label, "public dataset", _digest(_ids(d / "heldout" / "fresh" / f"{split}.jsonl")), _committed(d / "heldout" / "fresh" / "LOCKED.sha256", split)))
         rows.append(("Tool-output injection set (ids)", "synthetic, written by this project", _digest(_ids(d / "toolout" / "toolout.jsonl")), _committed(d / "toolout" / "LOCKED.sha256", "ids")))
         rows.append(("Tool-output injection set (file)", "synthetic, written by this project", hashlib.sha256((d / "toolout" / "toolout.jsonl").read_bytes()).hexdigest(), _committed(d / "toolout" / "LOCKED.sha256", "toolout.jsonl")))
+        rows.append(("Tool-output set v2, test manifest", "InjecAgent + npm docs + self-written negatives", hashlib.sha256((d / "toolout2" / "manifest.test.txt").read_bytes()).hexdigest(), _committed(d / "toolout2" / "LOCKED.sha256", "manifest.test.txt")))
+        rows.append(("Public round 3 (jayavibhav test), ids", "public dataset", hashlib.sha256((d / "heldout" / "round3" / "ids.txt").read_bytes()).hexdigest(), _committed(d / "heldout" / "round3" / "LOCKED.sha256", "ids.txt")))
     except (OSError, ValueError, KeyError) as e:
         return [{"set": "verification", "author": "", "status": f"could not run: {type(e).__name__}", "digest": ""}]
     return [{"set": s, "author": a, "status": "match" if got == want and want else "MISMATCH", "digest": want} for s, a, got, want in rows]
@@ -113,6 +115,13 @@ def scores(root: Path) -> list[tuple[str, str, dict[str, Any], dict[str, Any] | 
         for k, label in (("raw_cascade", "cascade on raw text"), ("full_pipeline", "hidden scan + cascade")):
             if k in d:
                 out.append(("Tool outputs (synthetic)", f"label:{label}", d[k], None))
+    if (d := load("heldout3.json")):
+        names = {"corpus-lite": "lite L2, corpus-only weights (old default)", "docs-lite": "lite L2, document-aware weights + windows (new default)", "deberta": "DeBERTa L2 + public pool (not the default)"}
+        for part, label in (("toolout2", "Tool outputs v2 (InjecAgent + npm docs)"), ("round3", "Public round 3 (jayavibhav)")):
+            for k, v in d.get(part, {}).items():
+                a, b = v.get("all attack"), v.get("all benign")
+                if a and b:
+                    out.append((label, f"label:{names.get(k, k)}", {"attack_blocked": a["blocked"], "attack_flagged": a["flagged"], "benign_blocked": b["blocked"], "benign_flagged": b["flagged"]}, None))
     return out
 
 

@@ -45,7 +45,43 @@ tool output in four on this set. The weakest attack techniques are zero-width pa
 60 characters of the instruction, which is a limit of how this set was built. A post-hoc look (not a tuning step)
 shows the false blocks concentrate on emails (20 of 33) and READMEs (17 of 33), which resemble the polite and
 carrier attack families in the dev corpus. The L0 rules layer is not part of this score. The set is spent for
-tuning: fixing these needs a new set.
+tuning; the fixes were tested on a new set (next section).
+
+### Second tool-output set and the fixes it tested (scored once)
+
+The set above is spent, so the fixes were built against a new, independent one (`data/toolout2/README.md`): InjecAgent
+attacks (a published benchmark, not written here), real README/CHANGELOG text from the project's own npm
+dependencies, and self-written hard negatives, split by group into train/dev/test (40/20/40) with the test split
+hash-committed before scoring. A second test set, 1000 rows from the public jayavibhav/prompt-injection test split
+(`data/heldout/round3`), measures transfer. Both were scored once, after the detector and weights were frozen:
+`docs/results/heldout3.md`. What changed: long text is read in overlapping 64-word windows (the worst window decides),
+base64 and zero-width payloads are decoded and scored on their own, and the lite L2 was refitted with documents in
+its negatives (`models/lite-l2-docs.npz`, now the default).
+
+| tool-output v2 test (300 attacks, 382 benign) | old default | new default | DeBERTa + public pool (not default) |
+|---|---|---|---|
+| attacks blocked | 44.0% | 80.0% [75.1, 84.1] | 95.0% [91.9, 97.0] |
+| benign wrongly blocked | 6.3% | 6.5% [4.5, 9.5] | 6.8% [4.7, 9.8] |
+| benign wrongly blocked or flagged | 70.4% | 14.4% [11.2, 18.3] | 7.1% [4.9, 10.1] |
+| base64 / zero-width attacks blocked | 40% / 60% | 100% / 85% | 100% / 100% |
+
+What this does and does not show:
+
+- **Fixed:** the 23.6% false-block rate on the old set is not reproduced on the new one, and blocked-or-flagged on
+  benign fell from 70% to 14%. Encoded attacks are caught (base64 100%, 20 items; zero-width 85%, 20 items; DeBERTa
+  100% on both). Intervals are Wilson and treat correlated items as independent, so they are optimistic.
+- **Not fixed:** false blocks did not go to zero. 6.5% of benign are still blocked, and two groups drive it: all 12
+  security-advisory texts (text that discusses injection, blocked by every variant) and 8% of the real READMEs.
+  On dev the benign block rate was 0.8%; the test number is the honest one.
+- **Plain polite requests** in the InjecAgent "base" family are still the weak spot of the lite model (55.6% blocked).
+- **Transfer to other datasets is not solved.** On the public round-3 test the new lite default blocks 18.8% of attacks
+  (7.6% of benign); DeBERTa blocks 61.4% at 19.6% benign blocked. The DeBERTa pool included a different split of the
+  same family (xTRam1), so that row is a mild transfer test, not a clean one. Adding the public pool to the lite model
+  made documents worse, so it was not shipped.
+- **DeBERTa:** the pool-trained bundle (`models/l2-deberta-pooled`, not committed, not the default) is the first DeBERTa
+  result on data it was never locked against. The earlier locked-split DeBERTa rows still measure a diverged model.
+- The InjecAgent attacks have only 62 distinct instructions, the documents are developer READMEs rather than emails,
+  and the hard negatives are written by this project. The old numbers above are the old stack's.
 
 ## Results (RQ1, simulated victim, seed 1)
 
