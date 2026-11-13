@@ -38,6 +38,8 @@ COPY --from=build /usr/local/bin/warden /usr/local/bin/warden
 COPY --from=build --chown=warden:warden /app /app
 # Repo data (corpora, scenarios, lab world) and policies are read at runtime.
 COPY --chown=warden:warden data /app/data
+# Fitted lite-L2 weights (document-aware); without this file the service falls back to fitting on the corpus.
+COPY --chown=warden:warden models/lite-l2-docs.npz /app/models/lite-l2-docs.npz
 COPY --chown=warden:warden policies /app/policies
 ENV WARDEN_REPO_ROOT=/app
 USER warden
